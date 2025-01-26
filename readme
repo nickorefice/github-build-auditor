@@ -97,9 +97,10 @@ python src/cli.py
 
 ### Options
 
-- `--unique-steps`: Print unique step names to JSON.
-- `--force-continue`: Force continue even if there's an error without prompting the user.
-- `--min-duration <seconds>`: Minimum duration in seconds to filter steps.
+--unique-steps: Print unique step names to JSON.
+--force-continue: Force continue even if there's an error without prompting the user.
+--min-duration <seconds>: Minimum duration in seconds to filter steps.
+--step-names-file <path>: Path to JSON file containing step names to calculate totals.
 
 ### Examples
 
@@ -127,5 +128,11 @@ Run the script with unique steps and minimum duration filter:
 python src/cli.py --unique-steps --min-duration 10
 ```
 
-This will execute the script, filter the steps based on the provided options, and write the filtered step details to `steps_output.json`. The output will be logged to both the console and the `project.log` file.
+Run the script with step names file:
+```sh
+python src/cli.py --step-names-file /path/to/step_names.json
+```
 
+
+
+This will execute the script, filter the steps based on the provided options, and write the filtered step details to steps_output.json. The output will be logged to both the console and the project.log file. Additionally, if a step names file is provided, the script will calculate the total duration for each specified step name and write the totals to step_name_totals.json. 
