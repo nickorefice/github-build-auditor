@@ -1,0 +1,95 @@
+# GitHub Actions Docker Build Time Tracker
+
+This project tracks the duration of Docker build steps in GitHub Actions workflows for a user's repositories.
+
+## Prerequisites
+
+- Python 3.6+
+- GitHub Personal Access Token with fine-grained permissions
+
+## Installation
+
+1. Clone the repository:
+
+    ```sh
+    git clone https://github.com/yourusername/github-actions-docker-build-time-tracker.git
+    cd github-actions-docker-build-time-tracker
+    ```
+
+2. Create a virtual environment and activate it:
+
+    ```sh
+    python -m venv venv
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    ```
+
+3. Install the required packages:
+
+    ```sh
+    pip install -r requirements.txt
+    ```
+
+4. Create a [`.env`](.env ) file in the root directory and add your GitHub token:
+
+    ```properties
+    GITHUB_TOKEN=your_generated_token_here
+    ```
+
+## Creating a GitHub Personal Access Token
+
+1. **Log in to GitHub**:
+   - Go to [GitHub](https://github.com) and log in to your account.
+
+2. **Navigate to Settings**:
+   - Click on your profile picture in the upper-right corner.
+   - Select "Settings" from the dropdown menu.
+
+3. **Access Developer Settings**:
+   - In the left sidebar, scroll down and click on "Developer settings".
+
+4. **Personal Access Tokens**:
+   - Click on "Personal access tokens" in the left sidebar.
+   - Click on "Tokens (fine-grained)" if you are using the fine-grained token interface.
+
+5. **Generate New Token**:
+   - Click the "Generate new token" button.
+   - Give your token a descriptive name in the "Note" field.
+
+6. **Select Repository Access**:
+   - Choose the repositories you want to grant access to or select "All repositories" if you want to access all repositories.
+
+7. **Set Permissions**:
+   - Under "Repository permissions", set the following:
+     - **Contents**: `Read-only` (to access repository contents)
+     - **Metadata**: `Read-only` (to access repository metadata)
+     - **Actions**: `Read-only` (to access workflow runs and jobs)
+
+8. **Generate Token**:
+   - Scroll down and click the "Generate token" button.
+
+9. **Copy the Token**:
+   - Copy the generated token and store it in a safe place. You won't be able to see it again once you leave the page.
+
+10. **Add Token to .env File**:
+    - Open your [.env](http://_vscodecontentref_/0) file and add the token:
+
+      ```properties
+      GITHUB_TOKEN=your_generated_token_here
+      GITHUB_USERNAME=your_github_username_here
+      ```
+
+### Why Each Permission is Needed
+
+- **Contents (Read-only)**: This permission allows the script to read the contents of the repositories. It is necessary to access the workflows and their configurations stored in the repository.
+- **Metadata (Read-only)**: This permission allows the script to read metadata about the repositories. It is necessary to list the repositories and retrieve basic information about them, such as their names and IDs.
+- **Actions (Read-only)**: This permission allows the script to read information about GitHub Actions workflows, workflow runs, and jobs. It is necessary to:
+  - List workflows in a repository.
+  - Retrieve workflow runs for a specific workflow.
+  - Retrieve jobs and steps within a workflow run to analyze the Docker build times.
+
+## Usage
+
+Run the CLI tool to track Docker build times:
+
+```sh
+python src/docker_build_time.py
