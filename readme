@@ -11,29 +11,29 @@ This project tracks the duration of Docker build steps in GitHub Actions workflo
 
 1. Clone the repository:
 
-    ```sh
-    git clone https://github.com/yourusername/github-actions-docker-build-time-tracker.git
-    cd github-actions-docker-build-time-tracker
-    ```
+   ```sh
+   git clone https://github.com/nickorefice/github-actions-docker-build-time-tracker.git
+   cd github-actions-docker-build-time-tracker
+   ```
 
 2. Create a virtual environment and activate it:
 
-    ```sh
-    python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-    ```
+   ```sh
+   python -m venv venv
+   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   ```
 
 3. Install the required packages:
 
-    ```sh
-    pip install -r requirements.txt
-    ```
+   ```sh
+   pip install -r requirements.txt
+   ```
 
-4. Create a [`.env`](.env ) file in the root directory and add your GitHub token:
+4. Create a [`.env`](.env) file in the root directory and add your GitHub token:
 
-    ```properties
-    GITHUB_TOKEN=your_generated_token_here
-    ```
+   ```properties
+   GITHUB_TOKEN=your_generated_token_here
+   ```
 
 ## Creating a GitHub Personal Access Token
 
@@ -60,9 +60,9 @@ This project tracks the duration of Docker build steps in GitHub Actions workflo
 
 7. **Set Permissions**:
    - Under "Repository permissions", set the following:
-     - **Contents**: `Read-only` (to access repository contents)
-     - **Metadata**: `Read-only` (to access repository metadata)
-     - **Actions**: `Read-only` (to access workflow runs and jobs)
+    - **Contents**: `Read-only` (to access repository contents)
+    - **Metadata**: `Read-only` (to access repository metadata)
+    - **Actions**: `Read-only` (to access workflow runs and jobs)
 
 8. **Generate Token**:
    - Scroll down and click the "Generate token" button.
@@ -71,12 +71,12 @@ This project tracks the duration of Docker build steps in GitHub Actions workflo
    - Copy the generated token and store it in a safe place. You won't be able to see it again once you leave the page.
 
 10. **Add Token to .env File**:
-    - Open your [.env](http://_vscodecontentref_/0) file and add the token:
+   - Open your [.env](.env) file and add the token:
 
-      ```properties
-      GITHUB_TOKEN=your_generated_token_here
-      GITHUB_USERNAME=your_github_username_here
-      ```
+     ```properties
+     GITHUB_TOKEN=your_generated_token_here
+     GITHUB_USERNAME=your_github_username_here
+     ```
 
 ### Why Each Permission is Needed
 
@@ -92,4 +92,40 @@ This project tracks the duration of Docker build steps in GitHub Actions workflo
 Run the CLI tool to track Docker build times:
 
 ```sh
-python src/docker_build_time.py
+python src/cli.py
+```
+
+### Options
+
+- `--unique-steps`: Print unique step names to JSON.
+- `--force-continue`: Force continue even if there's an error without prompting the user.
+- `--min-duration <seconds>`: Minimum duration in seconds to filter steps.
+
+### Examples
+
+Run the script with unique steps option:
+
+```sh
+python src/cli.py --unique-steps
+```
+
+Run the script with force continue option:
+
+```sh
+python src/cli.py --force-continue
+```
+
+Run the script with minimum duration filter:
+
+```sh
+python src/cli.py --min-duration 10
+```
+
+Run the script with unique steps and minimum duration filter:
+
+```sh
+python src/cli.py --unique-steps --min-duration 10
+```
+
+This will execute the script, filter the steps based on the provided options, and write the filtered step details to `steps_output.json`. The output will be logged to both the console and the `project.log` file.
+
