@@ -24,7 +24,8 @@ logging.basicConfig(
 @click.option('--unique-steps', is_flag=True, help="Print unique step names to JSON")
 @click.option('--force-continue', is_flag=True, help="Force continue even if there's an error without prompting the user")
 @click.option('--min-duration', type=int, default=0, help="Minimum duration in seconds to filter steps")
-def main(unique_steps, force_continue, min_duration):
+@click.option('--step-names-file', type=click.Path(exists=True), help="Path to JSON file containing step names to calculate totals")
+def main(unique_steps, force_continue, min_duration, step_names_file):
     username = os.getenv('GITHUB_USERNAME')
     if not username:
         raise ValueError("GitHub username must be set in the .env file")
@@ -38,6 +39,14 @@ def main(unique_steps, force_continue, min_duration):
     total_jobs_assessed = 0
     total_empty_jobs = 0
     success = True
+
+    step_name_totals = defaultdict(float)
+
+    if step_names_file:
+        with open(step_names_file, 'r') as f:
+            step_names = json.load(f)
+    else:
+        step_names = []
 
     try:
         repos = github_api.get_repositories()
@@ -116,6 +125,8 @@ def main(unique_steps, force_continue, min_duration):
                                                 "html_url": step_html_url
                                             }
                                             output_data.append(step_data)
+                                            if step_name in step_names:
+                                                step_name_totals[step_name] += duration
                                             if step_uses:
                                                 logging.info(f"Step uses: {step_uses}")
                                             else:
@@ -175,6 +186,13 @@ def main(unique_steps, force_continue, min_duration):
 
         with open('steps_output.json', 'w') as f:
             json.dump(output_data, f, indent=4)
+
+        # Log and write totals for specified step names
+        if step_names:
+            with open('step_name_totals.json', 'w') as f:
+                json.dump(step_name_totals, f, indent=4)
+            for step_name, total_duration in step_name_totals.items():
+                logging.info(f"Total duration for {step_name}: {total_duration} seconds")
 
         logging.info(f"Total duration for docker/build-push-action@v5: {total_duration_build_push}")
         logging.info(f"Total duration for docker/setup-qemu-action@v3.0.0: {total_duration_setup_qemu}")
