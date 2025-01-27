@@ -1,7 +1,3 @@
-Here's the reformatted README for GitHub with improved visual hierarchy and consistent styling:
-
----
-
 # 🚀 GitHub Build Auditor
 
 The **GitHub Build Auditor** is a tool designed to help developers analyze and optimize their GitHub Actions workflows by tracking the duration of Docker build steps. Gain valuable insights into your CI/CD pipelines, identify bottlenecks, and improve build efficiency.
@@ -169,7 +165,3 @@ This project is licensed under the [MIT License](LICENSE).
 ## 📧 Contact
 
 For questions or support, open an [issue](https://github.com/nickorefice/github-build-auditor/issues).
-
----
-
-This formatting should make your README more readable and visually appealing on GitHub! Let me know if you'd like further tweaks.
