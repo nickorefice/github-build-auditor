@@ -130,3 +130,5 @@ cython_debug/
 
 steps_output.json
 step_name_totals.json
+
+.gitattributes
