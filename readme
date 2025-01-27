@@ -1,6 +1,14 @@
-# GitHub Actions Docker Build Time Tracker
+# GitHub Build Auditor
 
-This project tracks the duration of Docker build steps in GitHub Actions workflows for a user's repositories.
+The GitHub Build Auditor is a tool designed to help developers analyze and optimize their GitHub Actions workflows by tracking the duration of Docker build steps. This tool provides insights into the performance of individual steps within your CI/CD pipelines, allowing you to identify bottlenecks and improve build efficiency.
+
+With the GitHub Build Auditor, you can:
+- Retrieve and analyze the duration of Docker build steps in your GitHub Actions workflows.
+- Filter steps based on duration to focus on the most time-consuming parts of your pipeline.
+- Identify unique steps and calculate the total duration for specified step names.
+- Generate detailed reports in JSON format for further analysis.
+
+This project is ideal for developers and DevOps engineers looking to optimize their CI/CD workflows and reduce build times.
 
 ## Prerequisites
 
@@ -92,7 +100,7 @@ This project tracks the duration of Docker build steps in GitHub Actions workflo
 Run the CLI tool to track Docker build times:
 
 ```sh
-python src/cli.py
+python3 src/cli.py
 ```
 
 ### Options
@@ -107,30 +115,30 @@ python src/cli.py
 Run the script with unique steps option:
 
 ```sh
-python src/cli.py --unique-steps
+python3 src/cli.py --unique-steps
 ```
 
 Run the script with force continue option:
 
 ```sh
-python src/cli.py --force-continue
+python3 src/cli.py --force-continue
 ```
 
 Run the script with minimum duration filter:
 
 ```sh
-python src/cli.py --min-duration 10
+python3 src/cli.py --min-duration 10
 ```
 
 Run the script with unique steps and minimum duration filter:
 
 ```sh
-python src/cli.py --unique-steps --min-duration 10
+python3 src/cli.py --unique-steps --min-duration 10
 ```
 
 Run the script with step names file:
 ```sh
-python src/cli.py --step-names-file /path/to/step_names.json
+python3 src/cli.py --step-names-file /path/to/step_names.json
 ```
 
 
