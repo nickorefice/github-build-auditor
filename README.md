@@ -81,6 +81,17 @@ Create a `step_names.json` file with step names and rerun the auditor:
 ```bash
 python3 src/github_build_auditor.py --step-names-file /path/to/step_names.json
 ```
+**Sample step_names.json:**
+```json
+[
+    "Build and push",
+    "Docker Setup QEMU",
+    "Build and push by digest",
+    "Build and push Docker image on push",
+    "Build and push Docker image on PR",
+    "Set up QEMU"
+]
+```
 
 **Sample Output:**
 ```json
@@ -95,27 +106,27 @@ python3 src/github_build_auditor.py --step-names-file /path/to/step_names.json
 
 ## 📦 Example JSON Report
 
-Sample report:
 ```json
 [
-  {
-    "step_name": "Build and push",
-    "repo_full_name": "nickorefice/db-demo",
-    "workflow_name": "CI",
-    "run_id": 12165501010,
-    "duration_seconds": 90.0,
-    "html_url": "https://github.com/nickorefice/db-demo/actions/runs/12165501010/job/33929599124"
-  },
-  {
-    "step_name": "Build and push",
-    "repo_full_name": "nickorefice/other-repo",
-    "workflow_name": "CI",
-    "run_id": 12165501010,
-    "duration_seconds": 50.0,
-    "html_url": "https://github.com/nickorefice/other-repo/actions/runs/12165501010/job/33929599404"
-  }
+   {
+      "step_name": "Build and push",
+      "repo_full_name": "user/repo1",
+      "workflow_name": "CI",
+      "run_id": 1234567890,
+      "duration_seconds": 90.0,
+      "html_url": "https://github.com/user/repo1/actions/runs/1234567890/job/1234567890"
+   },
+   {
+      "step_name": "Build and push",
+      "repo_full_name": "user/repo2",
+      "workflow_name": "CI",
+      "run_id": 1234567891,
+      "duration_seconds": 50.0,
+      "html_url": "https://github.com/user/repo2/actions/runs/1234567891/job/1234567891"
+   }
 ]
 ```
+
 
 ---
 
