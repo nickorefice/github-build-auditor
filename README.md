@@ -127,16 +127,16 @@ python3 src/github_build_auditor.py --step-names-file /path/to/step_names.json
 ## 💡 Recommendations
 To effectively use the GitHub Build Auditor, follow these steps:
 1. Initial Run:
-Run the script on as many repositories as possible with the --unique-steps option and possibly the --filter-duration option to identify as many steps involved with Docker builds.
+Run the script on as many repositories as possible with the `--unique-steps` option and possibly the `--filter-duration` option to identify as many steps involved with Docker builds.
 ```bash
 python src/cli.py --unique-steps --filter-duration 10
 ```
 2. Validate Step Names:
 Review the output to validate which step names are related to Docker builds.
-3. Create step_names.json:
+3. Create `step_names.json`:
 Review the output to validate which step names are related to Docker builds.
-4. Run with --step-names-file:
-Run the script with the --step-names-file option to approximate the total duration of Docker build steps across repositories.
+4. Run with `--step-names-file`:
+Run the script with the `--step-names-file` option to approximate the total duration of Docker build steps across repositories.
 Example:
 ```bash
 python src/cli.py --step-names-file src/step_names.json
