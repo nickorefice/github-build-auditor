@@ -10,40 +10,25 @@ With the GitHub Build Auditor, you can:
 
 This project is ideal for developers and DevOps engineers looking to optimize their CI/CD workflows and reduce build times.
 
-## Prerequisites
+---
 
-- Python 3.6+
-- GitHub Personal Access Token with fine-grained permissions
+## ✨ Features
 
-## Installation
+With the GitHub Build Auditor, you can:
+- ⏱ **Analyze Docker Build Durations**: Retrieve and evaluate the time taken by individual Docker build steps in your GitHub Actions workflows.
+- 🔍 **Filter Steps by Duration**: Focus on the most time-consuming Docker builds in your pipeline to identify optimization opportunities.
+- 📊 **Aggregate Durations**: Identify unique steps and calculate their total duration for better reporting and tracking.
+- 📝 **Generate Detailed Reports**: Export results in **JSON format** for further analysis and sharing.
 
-1. Clone the repository:
+---
 
-   ```sh
-   git clone https://github.com/nickorefice/github-actions-docker-build-time-tracker.git
-   cd github-actions-docker-build-time-tracker
-   ```
+## 🛠 Prerequisites
 
-2. Create a virtual environment and activate it:
+Before using the GitHub Build Auditor, ensure you have:
+- **Python 3.6+**
+- A **GitHub Personal Access Token** with fine-grained permissions.
 
-   ```sh
-   python -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-   ```
-
-3. Install the required packages:
-
-   ```sh
-   pip install -r requirements.txt
-   ```
-
-4. Create a [`.env`](.env) file in the root directory and add your GitHub token:
-
-   ```properties
-   GITHUB_TOKEN=your_generated_token_here
-   ```
-
-## Creating a GitHub Personal Access Token
+## 🛠 Creating a GitHub Personal Access Token
 
 1. **Log in to GitHub**:
    - Go to [GitHub](https://github.com) and log in to your account.
@@ -68,9 +53,9 @@ This project is ideal for developers and DevOps engineers looking to optimize th
 
 7. **Set Permissions**:
    - Under "Repository permissions", set the following:
-    - **Contents**: `Read-only` (to access repository contents)
-    - **Metadata**: `Read-only` (to access repository metadata)
-    - **Actions**: `Read-only` (to access workflow runs and jobs)
+     - **Contents**: `Read-only` (to access repository contents)
+     - **Metadata**: `Read-only` (to access repository metadata)
+     - **Actions**: `Read-only` (to access workflow runs and jobs)
 
 8. **Generate Token**:
    - Scroll down and click the "Generate token" button.
@@ -79,12 +64,12 @@ This project is ideal for developers and DevOps engineers looking to optimize th
    - Copy the generated token and store it in a safe place. You won't be able to see it again once you leave the page.
 
 10. **Add Token to .env File**:
-   - Open your [.env](.env) file and add the token:
+    - Open your [.env](http://_vscodecontentref_/0) file and add the token:
 
-     ```properties
-     GITHUB_TOKEN=your_generated_token_here
-     GITHUB_USERNAME=your_github_username_here
-     ```
+      ```properties
+      GITHUB_TOKEN=your_generated_token_here
+      GITHUB_USERNAME=your_github_username_here
+      ```
 
 ### Why Each Permission is Needed
 
@@ -95,52 +80,133 @@ This project is ideal for developers and DevOps engineers looking to optimize th
   - Retrieve workflow runs for a specific workflow.
   - Retrieve jobs and steps within a workflow run to analyze the Docker build times.
 
-## Usage
+---
 
-Run the CLI tool to track Docker build times:
+## 🚀 Installation
 
-```sh
-python3 src/cli.py
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/nickorefice/github-build-auditor.git
+   cd github-build-auditor
+   ```
+
+2. Install the required dependencies:
+   ```bash
+   pip3 install -r requirements.txt
+   ```
+
+---
+
+## ⚙️ Usage
+
+1. Set your GitHub Personal Access Token as an environment variable:
+   ```bash
+   export GITHUB_TOKEN=your_personal_access_token
+   ```
+
+2. Run the auditor with the following command:
+   ```bash
+   python3 src/github_build_auditor.py
+   ```
+
+   **Options**:
+   - `--unique-steps`: Print unique step names to JSON.
+   - `--filter-duration <seconds>`: Filter steps found exceeding a specified duration (e.g., `--filter-duration 15` for steps longer than 15 seconds).
+   - `--unique-steps`: Print unique step names to JSON.
+   - `--force-continue`: Force continue even if there's an error without prompting the user.
+   - `--step-names-file <path>`: Path to JSON file containing step names to calculate totals.
+
+3. Create a `step_names.json` file containing all possible Docker build step names then rerun the auditor with the `--step-names-file` option. 
+   ```bash
+   python3 src/github_build_auditor.py --step-names-file /path/to/step_names.json
+   ```
+
+   Example output:
+   ```json
+   {
+    "Build and push": 7931.0,
+    "Docker Setup QEMU": 93.0,
+    "Build and push by digest": 722.0,
+    "Build and push Docker image on push": 2572.0,
+    "Build and push Docker image on PR": 56.0,
+    "Set up QEMU": 11.0
+   }
+   ```
+
+---
+
+## 📦 Example JSON Report
+
+Here’s an example of a generated report:
+```json
+[
+    {
+        "step_name": "Build and push",
+        "repo_full_name": "nickorefice/db-demo",
+        "workflow_name": "CI",
+        "run_id": 12165501010,
+        "job_id": 33929599124,
+        "step_number": 3,
+        "started_at": "2024-12-04T17:54:47Z",
+        "completed_at": "2024-12-04T17:54:56Z",
+        "duration_seconds": 9.0,
+        "url": "https://api.github.com/repos/nickorefice/db-demo/actions/jobs/33929599124",
+        "html_url": "https://github.com/nickorefice/db-demo/actions/runs/12165501010/job/33929599124"
+    },
+    {
+        "step_name": "Build and push",
+        "repo_full_name": "nickorefice/other-repo",
+        "workflow_name": "CI",
+        "run_id": 12165501010,
+        "job_id": 33929599404,
+        "step_number": 3,
+        "started_at": "2024-12-04T17:54:46Z",
+        "completed_at": "2024-12-04T17:54:51Z",
+        "duration_seconds": 5.0,
+        "url": "https://api.github.com/repos/nickorefice/other-repo/actions/jobs/33929599404",
+        "html_url": "https://github.com/nickorefice/other-repo/actions/runs/12165501010/job/33929599404"
+    }
+]
 ```
 
-### Options
+---
 
---unique-steps: Print unique step names to JSON.
---force-continue: Force continue even if there's an error without prompting the user.
---min-duration <seconds>: Minimum duration in seconds to filter steps.
---step-names-file <path>: Path to JSON file containing step names to calculate totals.
+## 📖 Documentation
 
-### Examples
+### Available CLI Options:
+- `--unique-steps`: Print unique step names to JSON.
+- `--filter-duration <seconds>`: Filter steps found exceeding a specified duration (e.g., `--filter-duration 15` for steps longer than 15 seconds).
+- `--unique-steps`: Print unique step names to JSON.
+- `--force-continue`: Force continue even if there's an error without prompting the user.
+- `--step-names-file <path>`: Path to JSON file containing step names to calculate totals.
 
-Run the script with unique steps option:
+---
 
-```sh
-python3 src/cli.py --unique-steps
-```
+## 🛡 Security
 
-Run the script with force continue option:
+Make sure to:
+1. Use a GitHub Personal Access Token with **minimal necessary permissions**.
+2. Avoid sharing your token or committing it to version control.
 
-```sh
-python3 src/cli.py --force-continue
-```
+---
 
-Run the script with minimum duration filter:
+## 🤝 Contributing
 
-```sh
-python3 src/cli.py --min-duration 10
-```
+Contributions are welcome! To get started:
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature-branch`).
+3. Commit your changes (`git commit -m 'Add feature'`).
+4. Push to the branch (`git push origin feature-branch`).
+5. Create a pull request.
 
-Run the script with unique steps and minimum duration filter:
+---
 
-```sh
-python3 src/cli.py --unique-steps --min-duration 10
-```
+## 📄 License
 
-Run the script with step names file:
-```sh
-python3 src/cli.py --step-names-file /path/to/step_names.json
-```
+This project is licensed under the [MIT License](LICENSE).
 
+---
 
+## 📧 Contact
 
-This will execute the script, filter the steps based on the provided options, and write the filtered step details to steps_output.json. The output will be logged to both the console and the project.log file. Additionally, if a step names file is provided, the script will calculate the total duration for each specified step name and write the totals to step_name_totals.json. 
+For questions or support, feel free to open an [issue](https://github.com/nickorefice/github-build-auditor/issues) or reach out directly.

@@ -93,9 +93,9 @@ def process_steps(job, step_names, step_name_totals):
 @click.command()
 @click.option('--unique-steps', is_flag=True, help="Print unique step names to JSON")
 @click.option('--force-continue', is_flag=True, help="Force continue even if there's an error without prompting the user")
-@click.option('--min-duration', type=int, default=0, help="Minimum duration in seconds to filter steps")
+@click.option('--filter-duration', type=int, default=0, help="Filter for steps with duration longer than the specified value in seconds")
 @click.option('--step-names-file', type=click.Path(exists=True), help="Path to JSON file containing step names to calculate totals")
-def main(unique_steps, force_continue, min_duration, step_names_file):
+def main(unique_steps, force_continue, filter_duration, step_names_file):
     username = os.getenv('GITHUB_USERNAME')
     if not username:
         raise ValueError("GitHub username must be set in the .env file")
@@ -203,8 +203,8 @@ def main(unique_steps, force_continue, min_duration, step_names_file):
             output_data = unique_steps_data
 
         # Filter steps by minimum duration
-        if min_duration > 0:
-            output_data = [step for step in output_data if step['duration_seconds'] > min_duration]
+        if filter_duration > 0:
+            output_data = [step for step in output_data if step['duration_seconds'] > filter_duration]
 
         # Filter steps by step names if step_names_file is provided
         if step_names_file:
