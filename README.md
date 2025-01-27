@@ -112,7 +112,7 @@ python3 src/github_build_auditor.py --step-names-file /path/to/step_names.json
       "html_url": "https://github.com/user/repo1/actions/runs/1234567890/job/1234567890"
    },
    {
-      "step_name": "Build and push",
+      "step_name": "Docker buildx build",
       "repo_full_name": "user/repo2",
       "workflow_name": "CI",
       "run_id": 1234567891,
