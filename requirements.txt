@@ -1,3 +1,4 @@
 click
 requests
 python-dotenv
+colorama

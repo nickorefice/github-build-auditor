@@ -1,11 +1,15 @@
 import os
 import logging
 from datetime import datetime, timedelta
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import click
 from github_api import GitHubAPI
 from dotenv import load_dotenv
 import json
+from colorama import init, Fore, Style
+
+# Initialize colorama
+init(autoreset=True)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -15,8 +19,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("project.log"),
-        logging.StreamHandler()
+        logging.FileHandler("project.log")
     ]
 )
 
@@ -71,8 +74,8 @@ def process_steps(job, step_names, step_name_totals):
             duration = (end_time - start_time).total_seconds()
             month_key = start_time.strftime('%Y-%m')
             if step_name in step_names:
-                step_name_totals[step_name][month_key]['duration'] += duration
-                step_name_totals[step_name][month_key]['count'] += 1
+                step_name_totals[month_key][step_name]['duration'] += duration
+                step_name_totals[month_key][step_name]['count'] += 1
         step_data = {
             "step_name": step_name,
             "repo_full_name": job['repo_full_name'],
@@ -131,19 +134,19 @@ def main(unique_steps, force_continue, filter_duration, step_names_file):
 
     try:
         for namespace, repos in namespace_repos.items():
-            logging.info(f"Namespace '{namespace}' has {len(repos)} repositories")
+            print(f"\n{Fore.GREEN}Namespace '{namespace}' has {len(repos)} repositories:{Style.RESET_ALL}")
             for repo in repos:
                 repo_full_name = repo['full_name']
                 total_repositories_assessed += 1
-                logging.info(f"Processing repository: {repo_full_name}")
+                print(f"  {Fore.CYAN}- {repo_full_name}{Style.RESET_ALL}")
                 try:
                     workflows = github_api.get_workflows(repo_full_name)
                     if not workflows:
-                        logging.info(f"No workflows found in {repo_full_name}")
+                        print(f"    {Fore.RED}No workflows found in {repo_full_name}{Style.RESET_ALL}")
                         continue
-                    logging.info(f"Found {len(workflows)} workflows in {repo_full_name}")
+                    print(f"    {Fore.GREEN}Found {len(workflows)} workflows in {repo_full_name}{Style.RESET_ALL}")
                     for workflow in workflows:
-                        logging.info(f"Workflow: {workflow['name']} (URL: {workflow['url']})")
+                        print(f"      {Fore.YELLOW}Workflow: {workflow['name']} (URL: {workflow['url']}){Style.RESET_ALL}")
                         try:
                             workflow_runs = process_workflow_runs(github_api, repo_full_name, workflow)
                             for run in workflow_runs:
@@ -151,13 +154,16 @@ def main(unique_steps, force_continue, filter_duration, step_names_file):
                                 try:
                                     jobs = process_jobs(github_api, repo_full_name, run_id)
                                     total_jobs_assessed += len(jobs)
+                                    print(f"        {Fore.MAGENTA}Workflow run: {run_id}{Style.RESET_ALL}")
                                     for job in jobs:
-                                        logging.info(f"Job URL: {job['url']}")
+                                        print(f"          {Fore.BLUE}Job URL: {job['url']}{Style.RESET_ALL}")
                                         if not job.get('steps'):
-                                            logging.info(f"Steps are empty for job {job['id']} in workflow run {run_id}. Logs may have expired.")
+                                            print(f"          {Fore.RED}Steps are empty for job {job['id']} in workflow run {run_id}. Logs may have expired.{Style.RESET_ALL}")
                                             total_empty_jobs += 1
                                             continue
-                                        logging.info(f"Found {len(job['steps'])} steps in job {job['id']} in workflow run {run_id}")
+                                        print(f"          {Fore.GREEN}Found {len(job['steps'])} steps in job {job['id']} in workflow run {run_id}{Style.RESET_ALL}")
+                                        for step in job['steps']:
+                                            print(f"            {Fore.YELLOW}Step: {step['name']}{Style.RESET_ALL}")
                                         job['repo_full_name'] = repo_full_name
                                         job['workflow_name'] = workflow['name']
                                         job['run_id'] = run_id
@@ -215,19 +221,27 @@ def main(unique_steps, force_continue, filter_duration, step_names_file):
             json.dump(output_data, f, indent=4)
 
         # Log and write totals for specified step names by month
-        step_name_totals_by_month = {}
-        for step_name, month_totals in step_name_totals.items():
-            step_name_totals_by_month[step_name] = {month: {'duration': data['duration'], 'count': data['count']} for month, data in month_totals.items()}
+        step_name_totals_by_month = defaultdict(lambda: defaultdict(lambda: {'duration': 0.0, 'count': 0}))
+        for month_key, step_totals in step_name_totals.items():
+            for step_name, totals in step_totals.items():
+                step_name_totals_by_month[month_key][step_name] = {
+                    'duration': totals['duration'],
+                    'count': totals['count']
+                }
+
+        # Sort the step_name_totals_by_month by date in descending order
+        sorted_step_name_totals_by_month = OrderedDict(sorted(step_name_totals_by_month.items(), reverse=True))
 
         with open('step_name_totals.json', 'w') as f:
-            json.dump(step_name_totals_by_month, f, indent=4)
+            json.dump(sorted_step_name_totals_by_month, f, indent=4)
 
-        logging.info(f"Total repositories assessed: {total_repositories_assessed}")
-        logging.info(f"Total actions assessed: {total_actions_assessed}")
-        logging.info(f"Total jobs assessed: {total_jobs_assessed}")
-        logging.info(f"Total empty jobs (logs may have expired): {total_empty_jobs}")
+        print(f"\n{Fore.GREEN}Summary:{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Total repositories assessed: {Fore.YELLOW}{total_repositories_assessed}{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Total actions assessed: {Fore.YELLOW}{total_actions_assessed}{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Total jobs assessed: {Fore.YELLOW}{total_jobs_assessed}{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Total empty jobs (logs may have expired): {Fore.YELLOW}{total_empty_jobs}{Style.RESET_ALL}")
     else:
-        logging.error("Script execution failed. No summary information will be logged.")
+        print(f"{Fore.RED}Script execution failed. No summary information will be logged.{Style.RESET_ALL}")
 
 if __name__ == "__main__":
     main()
