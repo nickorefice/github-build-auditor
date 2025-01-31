@@ -1,6 +1,6 @@
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict
 import click
 from github_api import GitHubAPI
@@ -60,7 +60,8 @@ def process_steps(job, step_names, step_name_totals):
         step_number = step['number']
         step_started_at = step.get('started_at')
         step_completed_at = step.get('completed_at')
-        step_uses = step.get('uses', '').lower()
+        step_status = step.get('status')
+        step_conclusion = step.get('conclusion')  
         step_url = job['url']
         step_html_url = job['html_url']
         duration = None
@@ -68,6 +69,10 @@ def process_steps(job, step_names, step_name_totals):
             start_time = datetime.strptime(step_started_at, '%Y-%m-%dT%H:%M:%SZ')
             end_time = datetime.strptime(step_completed_at, '%Y-%m-%dT%H:%M:%SZ')
             duration = (end_time - start_time).total_seconds()
+            month_key = start_time.strftime('%Y-%m')
+            if step_name in step_names:
+                step_name_totals[step_name][month_key]['duration'] += duration
+                step_name_totals[step_name][month_key]['count'] += 1
         step_data = {
             "step_name": step_name,
             "repo_full_name": job['repo_full_name'],
@@ -78,16 +83,12 @@ def process_steps(job, step_names, step_name_totals):
             "started_at": step_started_at,
             "completed_at": step_completed_at,
             "duration_seconds": duration,
+            "status": step_status,
+            "conclusion": step_conclusion,
             "url": step_url,
             "html_url": step_html_url
         }
         output_data.append(step_data)
-        if step_name in step_names:
-            step_name_totals[step_name] += duration
-        if step_uses:
-            logging.info(f"Step uses: {step_uses}")
-        else:
-            logging.info(f"Step name: {step_name}")
     return output_data, total_actions_assessed
 
 @click.command()
@@ -108,7 +109,7 @@ def main(unique_steps, force_continue, filter_duration, step_names_file):
     total_empty_jobs = 0
     success = True
 
-    step_name_totals = defaultdict(float)
+    step_name_totals = defaultdict(lambda: defaultdict(lambda: {'duration': 0.0, 'count': 0}))
 
     if step_names_file:
         with open(step_names_file, 'r') as f:
@@ -213,12 +214,13 @@ def main(unique_steps, force_continue, filter_duration, step_names_file):
         with open('steps_output.json', 'w') as f:
             json.dump(output_data, f, indent=4)
 
-        # Log and write totals for specified step names
-        if step_names:
-            with open('step_name_totals.json', 'w') as f:
-                json.dump(step_name_totals, f, indent=4)
-            for step_name, total_duration in step_name_totals.items():
-                logging.info(f"Total duration for {step_name}: {total_duration} seconds")
+        # Log and write totals for specified step names by month
+        step_name_totals_by_month = {}
+        for step_name, month_totals in step_name_totals.items():
+            step_name_totals_by_month[step_name] = {month: {'duration': data['duration'], 'count': data['count']} for month, data in month_totals.items()}
+
+        with open('step_name_totals.json', 'w') as f:
+            json.dump(step_name_totals_by_month, f, indent=4)
 
         logging.info(f"Total repositories assessed: {total_repositories_assessed}")
         logging.info(f"Total actions assessed: {total_actions_assessed}")
