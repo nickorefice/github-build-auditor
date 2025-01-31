@@ -62,7 +62,7 @@ Ensure you have:
 
 To run the auditor:
    ```bash
-   python3 src/github_build_auditor.py
+   python3 src/docker_build_time.py
    ```
 
 ### CLI Options:
@@ -74,7 +74,7 @@ To run the auditor:
 ### Example:
 Create a `step_names.json` file with step names and rerun the auditor:
 ```bash
-python3 src/github_build_auditor.py --step-names-file /path/to/step_names.json
+python3 src/docker_build_time.py --step-names-file /path/to/step_names.json
 ```
 **Sample step_names.json:**
 ```json
@@ -160,7 +160,7 @@ To effectively use the GitHub Build Auditor, follow these steps:
 1. Initial Run:
 Run the script on as many repositories as possible with the `--unique-steps` option and possibly the `--filter-duration` option to identify as many steps involved with Docker builds.
 ```bash
-python src/cli.py --unique-steps --filter-duration 10
+python src/docker_build_time.py --unique-steps --filter-duration 10
 ```
 2. Validate Step Names:
 Review the output to validate which step names are related to Docker builds.
@@ -170,7 +170,7 @@ Review the output to validate which step names are related to Docker builds.
 Run the script with the `--step-names-file` option to approximate the total duration of Docker build steps across repositories.
 Example:
 ```bash
-python src/cli.py --step-names-file src/step_names.json
+python src/docker_build_time.py --step-names-file src/step_names.json
 ```
 5. Note on GitHub API:
 Be aware that the GitHub API archives step names beyond 90 days old, so the total duration will not include those older steps.
