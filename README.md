@@ -91,9 +91,26 @@ python3 src/github_build_auditor.py --step-names-file /path/to/step_names.json
 **Sample Output:**
 ```json
 {
-  "Build and push": 7931.0,
-  "Docker Setup QEMU": 93.0,
-  "Build and push by digest": 722.0
+   "Build and push": {
+      "2024-12": {
+         "duration": 51.0,
+         "count": 4
+      },
+      "2025-01": {
+         "duration": 1526.0,
+         "count": 2
+   }
+   },
+   "Docker Setup QEMU": {
+      "2025-01": {
+         "duration": 2.0,
+         "count": 1
+      },
+      "2024-04": {
+         "duration": 91.0,
+         "count": 36
+      }
+   }
 }
 ```
 
@@ -105,20 +122,34 @@ python3 src/github_build_auditor.py --step-names-file /path/to/step_names.json
 [
    {
       "step_name": "Build and push",
-      "repo_full_name": "user/repo1",
-      "workflow_name": "CI",
-      "run_id": 1234567890,
-      "duration_seconds": 90.0,
-      "html_url": "https://github.com/user/repo1/actions/runs/1234567890/job/1234567890"
+      "repo_full_name": "nickorefice/mastodon",
+      "workflow_name": "github-build",
+      "run_id": 8010151942,
+      "job_id": 21880454544,
+      "step_number": 6,
+      "started_at": "2024-02-22T19:48:29Z",
+      "completed_at": "2024-02-22T20:29:45Z",
+      "duration_seconds": 2476.0,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://api.github.com/repos/nickorefice/mastodon/actions/jobs/21880454544",
+      "html_url": "https://github.com/nickorefice/mastodon/actions/runs/8010151942/job/21880454544"
    },
    {
       "step_name": "Docker buildx build",
       "repo_full_name": "user/repo2",
       "workflow_name": "CI",
-      "run_id": 1234567891,
-      "duration_seconds": 50.0,
-      "html_url": "https://github.com/user/repo2/actions/runs/1234567891/job/1234567891"
-   }
+      "run_id": 8010151942,
+      "job_id": 21880454544,
+      "step_number": 5,
+      "started_at": "2024-02-22T19:48:28Z",
+      "completed_at": "2024-02-22T19:48:29Z",
+      "duration_seconds": 100.0,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://api.github.com/repos/nickorefice/mastodon/actions/jobs/21880454544",
+      "html_url": "https://github.com/nickorefice/mastodon/actions/runs/8010151942/job/21880454544"
+    }
 ]
 ```
 
