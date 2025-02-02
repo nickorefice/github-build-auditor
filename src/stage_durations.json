@@ -1,0 +1,560 @@
+[
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 13,
+        "stage_name": "Declarative: Checkout SCM",
+        "duration_ms": 278
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 13,
+        "stage_name": "Checkout Code",
+        "duration_ms": 362
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 13,
+        "stage_name": "Setup Docker Buildx",
+        "duration_ms": 472
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 13,
+        "stage_name": "Authenticate to Docker Hub",
+        "duration_ms": 444
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 13,
+        "stage_name": "Extract Docker Metadata",
+        "duration_ms": 141
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 13,
+        "stage_name": "List Directory Structure",
+        "duration_ms": 385
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 13,
+        "stage_name": "List Directory Contents",
+        "duration_ms": 361
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 13,
+        "stage_name": "Build and Push to Docker Hub",
+        "duration_ms": 6318
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 13,
+        "stage_name": "Declarative: Post Actions",
+        "duration_ms": 85
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 12,
+        "stage_name": "Declarative: Checkout SCM",
+        "duration_ms": 370
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 12,
+        "stage_name": "Checkout Code",
+        "duration_ms": 439
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 12,
+        "stage_name": "Setup Docker Buildx",
+        "duration_ms": 434
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 12,
+        "stage_name": "Authenticate to Docker Hub",
+        "duration_ms": 411
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 12,
+        "stage_name": "Extract Docker Metadata",
+        "duration_ms": 125
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 12,
+        "stage_name": "List Directory Structure",
+        "duration_ms": 334
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 12,
+        "stage_name": "List Directory Contents",
+        "duration_ms": 341
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 12,
+        "stage_name": "Build and Push to Docker Hub",
+        "duration_ms": 367
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 12,
+        "stage_name": "Declarative: Post Actions",
+        "duration_ms": 113
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 11,
+        "stage_name": "Declarative: Checkout SCM",
+        "duration_ms": 264
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 11,
+        "stage_name": "Checkout Code",
+        "duration_ms": 376
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 11,
+        "stage_name": "Setup Docker Buildx",
+        "duration_ms": 657
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 11,
+        "stage_name": "Authenticate to Docker Hub",
+        "duration_ms": 485
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 11,
+        "stage_name": "Extract Docker Metadata",
+        "duration_ms": 228
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 11,
+        "stage_name": "List Directory Structure",
+        "duration_ms": 361
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 11,
+        "stage_name": "List Directory Contents",
+        "duration_ms": 378
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 11,
+        "stage_name": "Build and Push to Docker Hub",
+        "duration_ms": 355
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 11,
+        "stage_name": "Declarative: Post Actions",
+        "duration_ms": 84
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 10,
+        "stage_name": "Declarative: Checkout SCM",
+        "duration_ms": 315
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 10,
+        "stage_name": "Checkout Code",
+        "duration_ms": 424
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 10,
+        "stage_name": "Setup Docker Buildx",
+        "duration_ms": 705
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 10,
+        "stage_name": "Authenticate to Docker Hub",
+        "duration_ms": 469
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 10,
+        "stage_name": "Extract Docker Metadata",
+        "duration_ms": 130
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 10,
+        "stage_name": "List Directory Structure",
+        "duration_ms": 369
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 10,
+        "stage_name": "List Directory Contents",
+        "duration_ms": 326
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 10,
+        "stage_name": "Build and Push to Docker Hub",
+        "duration_ms": 341
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 10,
+        "stage_name": "Declarative: Post Actions",
+        "duration_ms": 71
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 9,
+        "stage_name": "Declarative: Checkout SCM",
+        "duration_ms": 284
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 9,
+        "stage_name": "Checkout Code",
+        "duration_ms": 499
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 9,
+        "stage_name": "Setup Docker Buildx",
+        "duration_ms": 446
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 9,
+        "stage_name": "Authenticate to Docker Hub",
+        "duration_ms": 175
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 9,
+        "stage_name": "Extract Docker Metadata",
+        "duration_ms": 79
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 9,
+        "stage_name": "List Directory Structure",
+        "duration_ms": 58
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 9,
+        "stage_name": "List Directory Contents",
+        "duration_ms": 58
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 9,
+        "stage_name": "Build and Push to Docker Hub",
+        "duration_ms": 85
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 9,
+        "stage_name": "Declarative: Post Actions",
+        "duration_ms": 73
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 8,
+        "stage_name": "Declarative: Checkout SCM",
+        "duration_ms": 234
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 8,
+        "stage_name": "Checkout Code",
+        "duration_ms": 358
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 8,
+        "stage_name": "Setup Docker Buildx",
+        "duration_ms": 688
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 8,
+        "stage_name": "Authenticate to Docker Hub",
+        "duration_ms": 230
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 8,
+        "stage_name": "Extract Docker Metadata",
+        "duration_ms": 115
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 8,
+        "stage_name": "List Directory Structure",
+        "duration_ms": 76
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 8,
+        "stage_name": "List Directory Contents",
+        "duration_ms": 96
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 8,
+        "stage_name": "Build and Push to Docker Hub",
+        "duration_ms": 69
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 8,
+        "stage_name": "Declarative: Post Actions",
+        "duration_ms": 80
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 6,
+        "stage_name": "Declarative: Checkout SCM",
+        "duration_ms": 287
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 6,
+        "stage_name": "Checkout Code",
+        "duration_ms": 443
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 6,
+        "stage_name": "Setup Docker Buildx",
+        "duration_ms": 671
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 6,
+        "stage_name": "Authenticate to Docker Hub",
+        "duration_ms": 453
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 6,
+        "stage_name": "Extract Docker Metadata",
+        "duration_ms": 148
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 6,
+        "stage_name": "List Directory Structure",
+        "duration_ms": 365
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 6,
+        "stage_name": "List Directory Contents",
+        "duration_ms": 352
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 6,
+        "stage_name": "Setup Docker Buildx (Cloud)",
+        "duration_ms": 361
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 6,
+        "stage_name": "Build and Push to Docker Build Cloud",
+        "duration_ms": 70
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 6,
+        "stage_name": "Declarative: Post Actions",
+        "duration_ms": 110
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 5,
+        "stage_name": "Declarative: Checkout SCM",
+        "duration_ms": 370
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 5,
+        "stage_name": "Checkout Code",
+        "duration_ms": 448
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 5,
+        "stage_name": "Setup Docker Buildx",
+        "duration_ms": 414
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 5,
+        "stage_name": "Authenticate to Docker Hub",
+        "duration_ms": 431
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 5,
+        "stage_name": "Extract Docker Metadata",
+        "duration_ms": 133
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 5,
+        "stage_name": "List Directory Structure",
+        "duration_ms": 329
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 5,
+        "stage_name": "List Directory Contents",
+        "duration_ms": 339
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 5,
+        "stage_name": "Set Up Docker Buildx (Cloud)",
+        "duration_ms": 348
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 5,
+        "stage_name": "Build and Push Docker Image",
+        "duration_ms": 79
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 5,
+        "stage_name": "Declarative: Post Actions",
+        "duration_ms": 87
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 4,
+        "stage_name": "Declarative: Checkout SCM",
+        "duration_ms": 324
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 4,
+        "stage_name": "Checkout Code",
+        "duration_ms": 416
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 4,
+        "stage_name": "Setup Docker Buildx",
+        "duration_ms": 524
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 4,
+        "stage_name": "Authenticate to Docker Hub",
+        "duration_ms": 451
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 4,
+        "stage_name": "Extract Docker Metadata",
+        "duration_ms": 174
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 4,
+        "stage_name": "List Directory Structure",
+        "duration_ms": 350
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 4,
+        "stage_name": "List Directory Contents",
+        "duration_ms": 361
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 4,
+        "stage_name": "Set Up Docker Buildx (Cloud)",
+        "duration_ms": 81
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 4,
+        "stage_name": "Build and Push Docker Image",
+        "duration_ms": 80
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 4,
+        "stage_name": "Declarative: Post Actions",
+        "duration_ms": 84
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 3,
+        "stage_name": "Declarative: Checkout SCM",
+        "duration_ms": 352
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 3,
+        "stage_name": "Checkout Code",
+        "duration_ms": 287
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 3,
+        "stage_name": "Setup Docker Buildx",
+        "duration_ms": 708
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 3,
+        "stage_name": "Authenticate to Docker Hub",
+        "duration_ms": 633
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 3,
+        "stage_name": "Extract Docker Metadata",
+        "duration_ms": 164
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 3,
+        "stage_name": "List Directory Contents",
+        "duration_ms": 359
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 3,
+        "stage_name": "Set Up Docker Buildx (Cloud)",
+        "duration_ms": 85
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 3,
+        "stage_name": "Build and Push Docker Image",
+        "duration_ms": 142
+    },
+    {
+        "job_name": "basic-scout-demo-pipeline",
+        "build_number": 3,
+        "stage_name": "Declarative: Post Actions",
+        "duration_ms": 114
+    }
+]
