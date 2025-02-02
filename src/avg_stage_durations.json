@@ -1,1 +1,15 @@
-{}
+{
+    "Declarative: Checkout SCM": 307.8,
+    "Checkout Code": 405.2,
+    "Setup Docker Buildx": 571.9,
+    "Authenticate to Docker Hub": 418.2,
+    "Extract Docker Metadata": 143.7,
+    "List Directory Structure": 291.89,
+    "List Directory Contents": 297.1,
+    "Build and Push to Docker Hub": 1255.83,
+    "Declarative: Post Actions": 90.1,
+    "Setup Docker Buildx (Cloud)": 361.0,
+    "Build and Push to Docker Build Cloud": 70.0,
+    "Set Up Docker Buildx (Cloud)": 171.33,
+    "Build and Push Docker Image": 100.33
+}
