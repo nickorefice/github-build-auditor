@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+import click
 from collections import defaultdict
 from dotenv import load_dotenv
 from jenkins_api import JenkinsAPI
@@ -19,7 +20,9 @@ logging.basicConfig(
     ]
 )
 
-def main():
+@click.command()
+@click.option('--unique-steps', is_flag=True, help="Print unique step names to JSON")
+def main(unique_steps):
     JENKINS_URL = os.getenv("JENKINS_URL")
     JENKINS_USER = os.getenv("JENKINS_USER")
     JENKINS_TOKEN = os.getenv("JENKINS_TOKEN")
@@ -34,15 +37,19 @@ def main():
 
     # Get all Jobs, Builds and Stages
     all_jobs_builds_stages = jenkins_api.all_jobs_stages_times(jobs)
-
-    all_output_json = jenkins_api.output_json(all_jobs_builds_stages, 'stage_durations.json')
     
     # Get Avg Build Time per Stage
     avg_job_time = jenkins_api.get_stage_averages(all_jobs_builds_stages)
 
+    if unique_steps:
+        # Unique Stage names
+        unique_stage_names = jenkins_api.get_unique_stage_names(all_jobs_builds_stages)
+        unique_stage_names = jenkins_api.output_json('Unique Stage Names', unique_stage_names, 'step_names.json')
+
+
     # Output JSON
-    all_output_json = jenkins_api.output_json(all_jobs_builds_stages, 'stage_durations.json')
-    avg_output_summary = jenkins_api.output_json(avg_job_time, 'avg_stage_durations.json')
+    all_output_json = jenkins_api.output_json('General Job/Build Info', all_jobs_builds_stages, 'stage_durations.json')
+    avg_output_summary = jenkins_api.output_json('Avg Build Time', avg_job_time, 'avg_stage_durations.json')
 
     print("Completed fetching all Jenkins Info, ENJOY!")
 if __name__ == "__main__":

@@ -89,11 +89,11 @@ class JenkinsAPI:
         
         return output_summary
     
-    def output_json(self, content, file_name):
+    def output_json(self, print_message, content, file_name):
         # Save to JSON file
         with open(file_name, "w") as json_file:
             json.dump(content, json_file, indent=4)
-        print(f"✅ Stage durations successfully written to {file_name}")
+        print(f"✅ {print_message} successfully written to {file_name}")
 
     def get_stage_averages(self, all_stage_data):
         # Dictionary to store total duration and count per stage
@@ -117,6 +117,9 @@ class JenkinsAPI:
         for stage, avg_duration in average_stage_durations.items():
             print(f"🔹 {stage} - Average Duration: {avg_duration:.2f} ms")
         return average_stage_durations
+    
+    def get_unique_stage_names(self, all_stage_data):
+        return list({item["stage_name"] for item in all_stage_data})
 
 
     
@@ -128,12 +131,10 @@ if __name__ == "__main__":
 
     # Get all Jobs, Builds and Stages
     all_jobs_builds_stages = jenkins_api.all_jobs_stages_times(jobs)
-
-    all_output_json = jenkins_api.output_json(all_jobs_builds_stages, 'stage_durations.json')
     
     # Get Avg Build Time per Stage
     avg_job_time = jenkins_api.get_stage_averages(all_jobs_builds_stages)
 
     # Output JSON
-    all_output_json = jenkins_api.output_json(all_jobs_builds_stages, 'stage_durations.json')
-    avg_output_summary = jenkins_api.output_json(avg_job_time, 'avg_stage_durations.json')
+    all_output_json = jenkins_api.output_json('General Job/Build Info', all_jobs_builds_stages, 'stage_durations.json')
+    avg_output_summary = jenkins_api.output_json('Avg Build Time', avg_job_time, 'avg_stage_durations.json')
