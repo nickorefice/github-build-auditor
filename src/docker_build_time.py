@@ -24,7 +24,7 @@ logging.basicConfig(
 @click.option("--unique-steps", is_flag=True, help="Print unique step names to JSON (Available for both scripts)")
 @click.option("--force-continue", is_flag=True, help="(GitHub Only) Force continue even if there's an error")
 @click.option("--filter-duration", type=int, default=0, help="(GitHub Only) Filter steps with duration longer than this value (in seconds)")
-@click.option("--step-names-file", type=click.Path(exists=True), help="(GitHub Only) Path to JSON file containing step names to calculate totals")
+@click.option("--step-names-file", is_flag=True, help="Path to JSON file containing step names to calculate totals")
 def main(ci_tool, unique_steps, force_continue, filter_duration, step_names_file):
     """ Executes the GitHub or Jenkins audit script based on the provided argument. """
 
@@ -45,18 +45,17 @@ def main(ci_tool, unique_steps, force_continue, filter_duration, step_names_file
     # Construct the command
     cmd = ["python", script]
 
-    # Add `--unique-steps` since it applies to both scripts
     if unique_steps:
         cmd.append("--unique-steps")
 
-    # Add GitHub-specific parameters
-    if ci_tool == "github":
-        if force_continue:
-            cmd.append("--force-continue")
-        if filter_duration > 0:
-            cmd.extend(["--filter-duration", str(filter_duration)])
-        if step_names_file:
-            cmd.extend(["--step-names-file", step_names_file])
+    if force_continue:
+        cmd.append("--force-continue")
+
+    if filter_duration > 0:
+        cmd.extend(["--filter-duration", str(filter_duration)])
+
+    if step_names_file:
+        cmd.append("--step-names-file")
 
     # Execute the script with enhanced error handling
     # try:

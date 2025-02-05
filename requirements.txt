@@ -1,5 +1,5 @@
 click
 requests
 python-dotenv
-yaml
+yml
 jenkins

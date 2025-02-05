@@ -3,6 +3,7 @@ import requests
 import logging
 import jenkins
 import json
+import datetime
 from collections import defaultdict
 from dotenv import load_dotenv
 
@@ -28,10 +29,12 @@ class JenkinsAPI:
         """ Fetch all Jenkins jobs """
         try:
             jobs = self.server.get_jobs()
-            return [{"name": job["name"], "url": job["url"]} for job in jobs]
+            pipeline_jobs = self.filter_workflow_jobs(jobs)
+            return pipeline_jobs
         except jenkins.JenkinsException as e:
             logging.error(f"Error retrieving jobs: {e}")
             return []
+        
 
     def get_job_builds(self, job_name):
         """ Fetch all builds for a given job """
@@ -59,67 +62,157 @@ class JenkinsAPI:
         """ Fetch all pipeline stages and their durations using wfapi/describe. """
         url = f"{JENKINS_URL}/job/{job_name}/{build_number}/wfapi/describe"
         response = requests.get(url, auth=self.auth, headers=self.headers)
+
         if response.status_code != 200:
-            logging.error(f"Error fetching stage data (this is not a pipeline job): {response.status_code}")
+            logging.error(f"Error fetching stage data for {job_name} build {build_number}: {response.status_code}")
             return []
 
         data = response.json()
+
         return [
             {
-                "stage_name": stage.get("name", "Unknown Stage"),
-                "duration_ms": stage.get("durationMillis", 0) + stage.get("queueDurationMillis", 0)
+                **stage,  # ✅ Include all original fields
+                "duration_seconds": (stage.get("durationMillis", 0) + stage.get("queueDurationMillis", 0)) / 1000,
+                "started_at": stage.get("startTimeMillis"),
+                "formatted_started_at": self.format_timestamp(stage.get("startTimeMillis")),
+                "completed_at": stage.get("startTimeMillis", 0) + stage.get("durationMillis", 0),
             }
             for stage in data.get("stages", [])
         ]
-    
-    def all_jobs_stages_times(self, jobs):
-        """ Fetch all pipeline stages and their durations for all jobs and builds. """
-        output_summary = [
-            {
-                "job_name": job["name"],
-                "build_number": build["number"],
-                "stage_name": stage["stage_name"],
-                "duration_ms": stage["duration_ms"]
-            }
-            for job in jobs
-            for build in self.get_job_builds(job["name"])
-            for stage in self.get_pipeline_stages_and_duration(job["name"], build["number"])
-            if stage  # Ensures only valid stages are included
-        ]
         
+    def format_timestamp(self, millis):
+        """ Convert milliseconds timestamp to a human-readable date-time format. """
+        if not millis:
+            return None
+        dt = datetime.datetime.fromtimestamp(millis / 1000.0)
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def filter_workflow_jobs(self, jobs):
+        """ 
+        Filter jobs to only include Jenkins Workflow Jobs.
+        Logs jobs that are not of type 'org.jenkinsci.plugins.workflow.job.WorkflowJob'.
+        """
+        workflow_jobs = []
+
+        for job in jobs:
+            if job.get("_class") == "org.jenkinsci.plugins.workflow.job.WorkflowJob":
+                workflow_jobs.append(job)
+            else:
+                logging.warning(f"Skipping non-pipeline job: {job.get('name', 'Unknown Job')} (Class: {job.get('_class')})")
+
+        return workflow_jobs
+
+    def get_build_stage_data(self, job):
+        """ Get builds and stage data for a specific job """
+        build_data = []
+        pipeline_name = job.get("fullname", job.get("name", "Unknown Pipeline"))  # ✅ Extract pipeline name
+
+        builds = self.get_job_builds(job["name"])
+        if not isinstance(builds, list):  # ✅ Ensure builds is a valid list
+            logging.error(f"Invalid build data for job {job['name']}: {builds}")
+            return []
+
+        for build in builds:
+            stages = self.get_pipeline_stages_and_duration(job["name"], build["number"])
+
+            if not isinstance(stages, list):  # ✅ Ensure stages is a valid list
+                logging.error(f"Invalid stage data for job {job['name']} build {build['number']}: {stages}")
+                continue
+
+            for stage in stages:
+                if isinstance(stage, dict):  # ✅ Ensure `stage` is a dictionary before unpacking
+                    build_data.append({
+                        "pipeline_name": pipeline_name, # ✅ Include pipeline name
+                        **job, 
+                        **build, 
+                        **stage
+                                                                
+                    })
+                else:
+                    logging.error(f"Skipping invalid stage entry in job {job['name']} build {build['number']}: {stage}")
+
+        return build_data
+
+    def all_jobs_stages_times(self, jobs, filter_duration=None):
+        """ Fetch and process job build and stage data. """
+        workflow_jobs = self.filter_workflow_jobs(jobs)
+        output_summary = [
+            data for job in workflow_jobs
+            for data in self.get_build_stage_data(job)
+            if isinstance(data, dict) and (filter_duration is None or data.get("duration_seconds", 0) > filter_duration)  # ✅ Ensure valid dictionary before filtering
+        ]
         return output_summary
     
     def output_json(self, print_message, content, file_name):
         # Save to JSON file
         with open(file_name, "w") as json_file:
-            json.dump(content, json_file, indent=4)
-        print(f"✅ {print_message} successfully written to {file_name}")
+            try:
+                json.dump(content, json_file, indent=4)
+                print(f"✅ {print_message} successfully written to {file_name}")
+            except Exception as e:
+                logging.error(f"Error writing JSON output: {e}")
 
-    def get_stage_averages(self, all_stage_data):
-        # Dictionary to store total duration and count per stage
-        stage_totals = defaultdict(lambda: {"total_duration_in_ms": 0, "count": 0})
-        print(stage_totals)
-        # Iterate through all stage records and accumulate durations
-        for entry in all_stage_data:
-            stage_name = entry["stage_name"]
-            duration_ms = entry["duration_ms"]
+    def extract_unique_stage_names(self, job_data):
+        """ Extracts unique stage names from the given Jenkins job data. """
+        unique_names = set()  # Use a set to store unique names
 
-            stage_totals[stage_name]["total_duration_in_ms"] += duration_ms
-            stage_totals[stage_name]["count"] += 1
+        for job, stages in job_data.items():
+            for stage in stages:
+                stage_name = stage.get("name")  # Extract name safely
+                if stage_name:
+                    unique_names.add(stage_name)  # Add to set to ensure uniqueness
 
-        # Compute the average duration per stage
-        average_stage_durations = {
-            stage: round(totals["total_duration_in_ms"] / totals["count"], 2) 
-            for stage, totals in stage_totals.items()
-        }
-        # Print results
-        print("\n🚀 Average Stage Durations Across Builds:")
-        for stage, avg_duration in average_stage_durations.items():
-            print(f"🔹 {stage} - Average Duration: {avg_duration:.2f} ms")
-        return average_stage_durations
+        return list(unique_names)  # Convert back to list for output
     
-    def get_unique_stage_names(self, all_stage_data):
-        return list({item["stage_name"] for item in all_stage_data})
+
+    def get_monthly_stage_summary(self, data):
+        """
+        Aggregates the total duration and count of each stage for each month.
+
+        :param data: Dictionary containing Jenkins job build information.
+        :return: Dictionary with monthly summaries, including count, total duration per stage, and overall total duration.
+        """
+        monthly_summary = defaultdict(lambda: {"stages": defaultdict(lambda: {"count": 0, "total_duration": 0}), "total_duration_seconds": 0})
+
+        for pipeline, stages in data.items():  # Iterate through each pipeline
+            for stage in stages:
+                formatted_time = stage.get("formatted_started_at")
+                if not formatted_time:
+                    continue  # Skip if timestamp is missing
+
+                # Convert to datetime
+                try:
+                    stage_date = datetime.datetime.strptime(formatted_time, "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    continue  # Skip if parsing fails
+
+                month_key = stage_date.strftime("%Y-%m")  # Format as YYYY-MM for grouping
+                stage_name = stage.get("name", "Unknown Stage")
+                duration = stage.get("duration_seconds", 0)
+
+                # ✅ Increment count of stage executions
+                monthly_summary[month_key]["stages"][stage_name]["count"] += 1
+
+                # ✅ Sum the total duration for the stage
+                monthly_summary[month_key]["stages"][stage_name]["total_duration"] += duration
+
+                # ✅ Add to overall total duration for the month
+                monthly_summary[month_key]["total_duration_seconds"] += duration
+
+        # Convert defaultdict to regular dict for JSON-friendly output
+        return {
+            month: {
+                "stages": {
+                    stage: {
+                        "count": data["stages"][stage]["count"],
+                        "total_duration_seconds": round(data["stages"][stage]["total_duration"], 3)  # Round for readability
+                    }
+                    for stage in data["stages"]
+                },
+                "total_duration_seconds": round(data["total_duration_seconds"], 3)
+            }
+            for month, data in monthly_summary.items()
+        }
 
 
     
@@ -127,14 +220,16 @@ if __name__ == "__main__":
     jenkins_api = JenkinsAPI()
 
     print("Fetching all Jenkins jobs...")
+    # Get Jobs
     jobs = jenkins_api.get_jobs()
+    job_build_stage_data = {} 
+    # Get Builds and Stages
+    for job in jobs:
+        job_name = job.get("name", "Unknown Job")  # Ensure job has a name
+        build_stage_info = jenkins_api.all_jobs_stages_times([job])  # Pass as a list
 
-    # Get all Jobs, Builds and Stages
-    all_jobs_builds_stages = jenkins_api.all_jobs_stages_times(jobs)
-    
-    # Get Avg Build Time per Stage
-    avg_job_time = jenkins_api.get_stage_averages(all_jobs_builds_stages)
+        # Store in dictionary
+        job_build_stage_data[job_name] = build_stage_info
 
     # Output JSON
-    all_output_json = jenkins_api.output_json('General Job/Build Info', all_jobs_builds_stages, 'stage_durations.json')
-    avg_output_summary = jenkins_api.output_json('Avg Build Time', avg_job_time, 'avg_stage_durations.json')
+    all_output_json = jenkins_api.output_json('General Job/Build Info', job_build_stage_data, 'stage_durations.json')
