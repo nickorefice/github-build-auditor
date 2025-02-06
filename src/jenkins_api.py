@@ -164,8 +164,25 @@ class JenkinsAPI:
 
         return list(unique_names)  # Convert back to list for output
     
+    def load_step_names(self, step_names_file):
+        """ Loads step names from a JSON file if provided, else returns an empty list. """
+        if not step_names_file:
+            return []
 
-    def get_monthly_stage_summary(self, data):
+        if os.path.exists(step_names_file):
+            try:
+                with open(step_names_file, "r") as f:
+                    step_names = json.load(f)
+                logging.info(f"✅ Loaded step names from {step_names_file}")
+                return step_names
+            except json.JSONDecodeError:
+                logging.error(f"❌ Invalid JSON format in {step_names_file}. Exiting.")
+                return []
+        else:
+            logging.error(f"❌ File {step_names_file} does not exist. Exiting.")
+            return []
+
+    def get_monthly_stage_summary(self, data, filter_steps=None):
         """
         Aggregates the total duration and count of each stage for each month.
 
@@ -188,6 +205,11 @@ class JenkinsAPI:
 
                 month_key = stage_date.strftime("%Y-%m")  # Format as YYYY-MM for grouping
                 stage_name = stage.get("name", "Unknown Stage")
+
+                 # ✅ Filter stages based on `filter_steps` list
+                if filter_steps and stage_name not in filter_steps:
+                    continue  # Skip stages not in the filter list
+
                 duration = stage.get("duration_seconds", 0)
 
                 # ✅ Increment count of stage executions

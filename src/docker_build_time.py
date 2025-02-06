@@ -22,10 +22,11 @@ logging.basicConfig(
 @click.command()
 @click.argument("ci_tool", type=click.Choice(["github", "jenkins"], case_sensitive=False))
 @click.option("--unique-steps", is_flag=True, help="Print unique step names to JSON (Available for both scripts)")
-@click.option("--force-continue", is_flag=True, help="(GitHub Only) Force continue even if there's an error")
-@click.option("--filter-duration", type=int, default=0, help="(GitHub Only) Filter steps with duration longer than this value (in seconds)")
-@click.option("--step-names-file", is_flag=True, help="Path to JSON file containing step names to calculate totals")
-def main(ci_tool, unique_steps, force_continue, filter_duration, step_names_file):
+@click.option("--force-continue", is_flag=True, help="Force continue even if there's an error")
+@click.option("--filter-duration", type=int, default=0, help="Filter steps with duration longer than this value (in seconds)")
+@click.option("--monthly-summary", is_flag=True, default=0, help="Extract and save unique step names dynamically")  # ✅ Added Flag Mode
+@click.option("--step-names-file", type=click.Path(), default=None, required=False, help="Either Path to JSON file containing step names or just straight flag to calculate totals")
+def main(ci_tool, unique_steps, force_continue, filter_duration, monthly_summary, step_names_file):
     """ Executes the GitHub or Jenkins audit script based on the provided argument. """
 
     # Determine the script to run
@@ -40,8 +41,6 @@ def main(ci_tool, unique_steps, force_continue, filter_duration, step_names_file
         click.echo(error_message)
         return
 
-    click.echo(f"🔹 Running {ci_tool.capitalize()} audit...")
-
     # Construct the command
     cmd = ["python", script]
 
@@ -54,8 +53,14 @@ def main(ci_tool, unique_steps, force_continue, filter_duration, step_names_file
     if filter_duration > 0:
         cmd.extend(["--filter-duration", str(filter_duration)])
 
+    if monthly_summary:
+        cmd.append("--monthly-summary")
+
     if step_names_file:
         cmd.append("--step-names-file")
+
+
+    click.echo(f"🔹 Running {ci_tool.capitalize()} audit...")
 
     # Execute the script with enhanced error handling
     # try:
