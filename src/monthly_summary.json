@@ -1,0 +1,26 @@
+{
+    "2025-02": {
+        "Setup Testcontainers Cloud Client": 16.0,
+        "Test": 306.0,
+        "Post Setup Java": 11.0
+    },
+    "2025-01": {
+        "Set up job": 2.0,
+        "Setup Testcontainers Cloud Client": 31.0,
+        "Test": 608.0,
+        "Setup Java": 4.0,
+        "Post Setup Java": 7.0
+    },
+    "2024-12": {
+        "Setup Java": 9.0,
+        "Setup Testcontainers Cloud Client": 35.0,
+        "Test": 827.0,
+        "Set up job": 2.0,
+        "Post Setup Java": 14.0
+    },
+    "2024-11": {
+        "Setup Testcontainers Cloud Client": 7.0,
+        "Test": 156.0,
+        "Post Setup Java": 3.0
+    }
+}

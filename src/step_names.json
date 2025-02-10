@@ -1,15 +1,8 @@
 [
-    "Extract Docker Metadata",
-    "Setup Docker Buildx (Cloud)",
-    "Setup Docker Buildx",
-    "Checkout Code",
-    "Declarative: Checkout SCM",
-    "List Directory Contents",
-    "Set Up Docker Buildx (Cloud)",
-    "Build and Push Docker Image",
-    "Declarative: Post Actions",
-    "Build and Push to Docker Hub",
-    "Authenticate to Docker Hub",
-    "Build and Push to Docker Build Cloud",
-    "List Directory Structure"
+    "Complete job",
+    "Post Run actions/checkout@v4",
+    "Run actions/checkout@v4",
+    "Set up job",
+    "Setup Testcontainers Cloud Client",
+    "Test"
 ]
