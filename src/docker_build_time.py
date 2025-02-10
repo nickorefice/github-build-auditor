@@ -24,8 +24,8 @@ logging.basicConfig(
 @click.option("--unique-steps", is_flag=True, help="Print unique step names to JSON (Available for both scripts)")
 @click.option("--force-continue", is_flag=True, help="Force continue even if there's an error")
 @click.option("--filter-duration", type=int, default=0, help="Filter steps with duration longer than this value (in seconds)")
-@click.option("--monthly-summary", is_flag=True, default=0, help="Extract and save unique step names dynamically")  # ✅ Added Flag Mode
-@click.option("--step-names-file", type=click.Path(), default=None, required=False, help="Either Path to JSON file containing step names or just straight flag to calculate totals")
+@click.option("--monthly-summary", is_flag=True, default=0, help="Provide a summary of how long each step took to run within a given month.")  # ✅ Added Flag Mode
+@click.option("--step-names-file", type=click.Path(exists=True), default=None, required=False, help="Path to JSON file containing step names")
 def main(ci_tool, unique_steps, force_continue, filter_duration, monthly_summary, step_names_file):
     """ Executes the GitHub or Jenkins audit script based on the provided argument. """
 
@@ -57,18 +57,13 @@ def main(ci_tool, unique_steps, force_continue, filter_duration, monthly_summary
         cmd.append("--monthly-summary")
 
     if step_names_file:
-        cmd.append("--step-names-file")
+        cmd.extend(["--step-names-file", str(step_names_file)])
 
 
     click.echo(f"🔹 Running {ci_tool.capitalize()} audit...")
 
-    # Execute the script with enhanced error handling
-    # try:
-    #     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    print(f"🔹 Running command: {cmd} (type: {type(cmd)})")
 
-    #     # # Log and display output
-    #     logging.info(result.stdout)
-    #     click.echo(result.stdout)
 
     try:
         process = subprocess.Popen(cmd, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr, text=True)

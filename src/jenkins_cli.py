@@ -24,8 +24,8 @@ logging.basicConfig(
 @click.option('--unique-steps', is_flag=True, help="Print unique step names to JSON")
 @click.option("--force-continue", is_flag=True, help="Continue execution even if Jenkins API fails")
 @click.option('--filter-duration', type=int, default=0, help="Filter for steps with duration longer than the specified value in seconds")
-@click.option("--monthly-summary", is_flag=True, default=0, help="Extract and save unique step names dynamically")  # ✅ Added Flag Mode
-@click.option("--step-names-file", type=click.Path(), default=None, required=False, help="Either Path to JSON file containing step names or just straight flag to calculate totals")
+@click.option("--monthly-summary", is_flag=True, default=0, help="Provide a summary of how long each step took to run within a given month.")  # ✅ Added Flag Mode
+@click.option("--step-names-file", type=click.Path(), default=None, required=False, help="Path to JSON file containing step names")
 def main(unique_steps, force_continue, filter_duration, monthly_summary, step_names_file):
     JENKINS_URL = os.getenv("JENKINS_URL")
     JENKINS_USER = os.getenv("JENKINS_USER")
