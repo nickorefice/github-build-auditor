@@ -1,4 +1,6 @@
 click
 requests
 python-dotenv
+yml
+jenkins
 colorama
