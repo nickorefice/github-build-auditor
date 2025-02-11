@@ -62,7 +62,7 @@ Ensure you have:
 
 To run the auditor:
    ```bash
-   python3 src/github_build_auditor.py
+   python3 src/docker_build_time.py
    ```
 
 ### CLI Options:
@@ -74,7 +74,7 @@ To run the auditor:
 ### Example:
 Create a `step_names.json` file with step names and rerun the auditor:
 ```bash
-python3 src/github_build_auditor.py --step-names-file /path/to/step_names.json
+python3 src/docker_build_time.py --step-names-file /path/to/step_names.json
 ```
 **Sample step_names.json:**
 ```json
@@ -91,9 +91,26 @@ python3 src/github_build_auditor.py --step-names-file /path/to/step_names.json
 **Sample Output:**
 ```json
 {
-  "Build and push": 7931.0,
-  "Docker Setup QEMU": 93.0,
-  "Build and push by digest": 722.0
+   "Build and push": {
+      "2024-12": {
+         "duration": 51.0,
+         "count": 4
+      },
+      "2025-01": {
+         "duration": 1526.0,
+         "count": 2
+   }
+   },
+   "Docker Setup QEMU": {
+      "2025-01": {
+         "duration": 2.0,
+         "count": 1
+      },
+      "2024-04": {
+         "duration": 91.0,
+         "count": 36
+      }
+   }
 }
 ```
 
@@ -105,20 +122,34 @@ python3 src/github_build_auditor.py --step-names-file /path/to/step_names.json
 [
    {
       "step_name": "Build and push",
-      "repo_full_name": "user/repo1",
-      "workflow_name": "CI",
-      "run_id": 1234567890,
-      "duration_seconds": 90.0,
-      "html_url": "https://github.com/user/repo1/actions/runs/1234567890/job/1234567890"
+      "repo_full_name": "nickorefice/mastodon",
+      "workflow_name": "github-build",
+      "run_id": 8010151942,
+      "job_id": 21880454544,
+      "step_number": 6,
+      "started_at": "2024-02-22T19:48:29Z",
+      "completed_at": "2024-02-22T20:29:45Z",
+      "duration_seconds": 2476.0,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://api.github.com/repos/nickorefice/mastodon/actions/jobs/21880454544",
+      "html_url": "https://github.com/nickorefice/mastodon/actions/runs/8010151942/job/21880454544"
    },
    {
       "step_name": "Docker buildx build",
       "repo_full_name": "user/repo2",
       "workflow_name": "CI",
-      "run_id": 1234567891,
-      "duration_seconds": 50.0,
-      "html_url": "https://github.com/user/repo2/actions/runs/1234567891/job/1234567891"
-   }
+      "run_id": 8010151942,
+      "job_id": 21880454544,
+      "step_number": 5,
+      "started_at": "2024-02-22T19:48:28Z",
+      "completed_at": "2024-02-22T19:48:29Z",
+      "duration_seconds": 100.0,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://api.github.com/repos/nickorefice/mastodon/actions/jobs/21880454544",
+      "html_url": "https://github.com/nickorefice/mastodon/actions/runs/8010151942/job/21880454544"
+    }
 ]
 ```
 
@@ -129,7 +160,7 @@ To effectively use the GitHub Build Auditor, follow these steps:
 1. Initial Run:
 Run the script on as many repositories as possible with the `--unique-steps` option and possibly the `--filter-duration` option to identify as many steps involved with Docker builds.
 ```bash
-python src/cli.py --unique-steps --filter-duration 10
+python src/docker_build_time.py --unique-steps --filter-duration 10
 ```
 2. Validate Step Names:
 Review the output to validate which step names are related to Docker builds.
@@ -139,7 +170,7 @@ Review the output to validate which step names are related to Docker builds.
 Run the script with the `--step-names-file` option to approximate the total duration of Docker build steps across repositories.
 Example:
 ```bash
-python src/cli.py --step-names-file src/step_names.json
+python src/docker_build_time.py --step-names-file src/step_names.json
 ```
 5. Note on GitHub API:
 Be aware that the GitHub API archives step names beyond 90 days old, so the total duration will not include those older steps.
