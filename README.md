@@ -1,16 +1,18 @@
-# 🚀 GitHub Build Auditor
+# 🚀 GitHub and Jenkins Build Auditor
 
-The **GitHub Build Auditor** is a tool designed to help developers analyze and optimize their GitHub Actions workflows by tracking the duration of Docker build steps. Gain valuable insights into your CI/CD pipelines, identify bottlenecks, and improve build efficiency.
+The **Build Auditor** is a tool designed to help developers analyze and optimize their CI/CD workflows by tracking the duration of build steps. It supports both GitHub Actions and Jenkins pipelines, providing valuable insights into your build processes, helping identify bottlenecks, and improving build efficiency.
 
 ---
 
 ## ✨ Features
 
-With the GitHub Build Auditor, you can:
-- ⏱ **Analyze Docker Build Durations**: Retrieve and evaluate the time taken by Docker build steps.
-- 🔍 **Filter Steps by Duration**: Focus on the most time-consuming pipeline steps.
-- 📊 **Aggregate Step Durations**: Identify unique steps and calculate their total durations.
-- 📝 **Generate Reports**: Export detailed results in **JSON format** for further analysis.
+With the Build Auditor, you can:
+- ⏱ **Analyze Build Durations**: Retrieve and evaluate the time taken by build steps in both GitHub Actions and Jenkins
+- 🔍 **Filter Steps by Duration**: Focus on the most time-consuming pipeline steps
+- 📊 **Aggregate Step Durations**: Identify unique steps and calculate their total durations
+- 📝 **Generate Reports**: Export detailed results in **JSON format** for further analysis
+- 🎨 **Colored Output**: Enhanced terminal output with color-coded messages for better readability
+- 📈 **Monthly Summaries**: Generate monthly summaries of build times and frequencies
 
 ---
 
@@ -18,28 +20,43 @@ With the GitHub Build Auditor, you can:
 
 Ensure you have:
 - **Python 3.6+**
-- A **GitHub Personal Access Token** with fine-grained permissions.
+- A **GitHub Personal Access Token** (for GitHub analysis)
+- **Jenkins Credentials** (for Jenkins analysis)
 
 ---
 
-## 🔑 Creating a GitHub Personal Access Token
+## 🔑 Authentication Setup
 
-1. **Log in to GitHub**: Visit [GitHub](https://github.com) and log in.
-2. **Navigate to Settings**: Click your profile picture → "Settings".
-3. **Developer Settings**: Scroll down and select "Developer settings".
-4. **Personal Access Tokens**: Choose "Tokens (fine-grained)".
+### GitHub Setup
+1. **Log in to GitHub**: Visit [GitHub](https://github.com) and log in
+2. **Navigate to Settings**: Click your profile picture → "Settings"
+3. **Developer Settings**: Scroll down and select "Developer settings"
+4. **Personal Access Tokens**: Choose "Tokens (fine-grained)"
 5. **Generate New Token**:
-   - Name the token.
+   - Name the token
    - Set repository permissions:
      - **Contents**: `Read-only`
      - **Metadata**: `Read-only`
      - **Actions**: `Read-only`
-6. **Copy the Token**: Save it securely—once you leave, you cannot view it again.
-7. **Add to Environment Variables to .env file inside project directory**:
-   ```properties
-   GITHUB_TOKEN=your_generated_token
-   GITHUB_USERNAME=your_github_username
-   ```
+6. **Copy the Token**: Save it securely
+
+### Jenkins Setup
+1. **Log in to Jenkins**
+2. **User Settings**: Click your username → Configure
+3. **API Token**: Generate a new API token
+4. **Copy the Token**: Save it securely
+
+### Environment Configuration
+Create a `.env` file inside the project directory:
+```properties
+# GitHub Configuration
+GITHUB_TOKEN=your_github_token
+
+# Jenkins Configuration
+JENKINS_URL=your_jenkins_url
+JENKINS_USER=your_jenkins_username
+JENKINS_TOKEN=your_jenkins_api_token
+```
 
 ---
 
@@ -61,63 +78,49 @@ Ensure you have:
 ## ⚙️ Usage
 
 To run the auditor:
-   ```bash
-   python3 src/docker_build_time.py
-   ```
+```bash
+# For GitHub analysis
+python3 src/docker_build_time.py github
+
+# For Jenkins analysis
+python3 src/docker_build_time.py jenkins
+```
 
 ### CLI Options:
-- `--unique-steps`: Print unique step names to JSON.
-- `--filter-duration <seconds>`: Filter steps exceeding a specified duration (e.g., `--filter-duration 15`).
-- `--force-continue`: Skip errors without prompting the user.
-- `--step-names-file <path>`: Path to a JSON file containing step names to calculate totals.
+- `--unique-steps`: Print unique step names to JSON
+- `--filter-duration <seconds>`: Filter steps exceeding a specified duration
+- `--force-continue`: Skip errors without prompting the user
+- `--monthly-summary`: Generate monthly summary of step durations
+- `--step-names-file <path>`: Path to a JSON file containing step names to calculate totals
 
-### Example:
-Create a `step_names.json` file with step names and rerun the auditor:
+### Example Commands:
 ```bash
-python3 src/docker_build_time.py --step-names-file /path/to/step_names.json
-```
-**Sample step_names.json:**
-```json
-[
-    "Build and push",
-    "Docker Setup QEMU",
-    "Build and push by digest",
-    "Build and push Docker image on push",
-    "Build and push Docker image on PR",
-    "Set up QEMU"
-]
+# Generate unique steps for GitHub workflows
+python3 src/docker_build_time.py github --unique-steps
+
+# Analyze Jenkins builds with duration filter
+python3 src/docker_build_time.py jenkins --filter-duration 300
+
+# Generate monthly summary for GitHub
+python3 src/docker_build_time.py github --monthly-summary
+
+# Full analysis with specific steps
+python3 src/docker_build_time.py github --step-names-file step_names.json --monthly-summary
 ```
 
-**Sample Output:**
-```json
-{
-   "Build and push": {
-      "2024-12": {
-         "duration": 51.0,
-         "count": 4
-      },
-      "2025-01": {
-         "duration": 1526.0,
-         "count": 2
-   }
-   },
-   "Docker Setup QEMU": {
-      "2025-01": {
-         "duration": 2.0,
-         "count": 1
-      },
-      "2024-04": {
-         "duration": 91.0,
-         "count": 36
-      }
-   }
-}
-```
+### Output Color Coding:
+The tool now uses color-coded output for better readability:
+- 🟢 **Green**: Success messages and completions
+- 🔵 **Blue**: Informational messages
+- 🟡 **Yellow**: Warnings and prompts
+- 🔴 **Red**: Errors
+- 🔷 **Cyan**: Status updates and processing
 
 ---
 
-## 📦 Example JSON Report
+## 📦 Example JSON Reports
 
+### Stage Durations Output:
 ```json
 [
    {
@@ -126,78 +129,75 @@ python3 src/docker_build_time.py --step-names-file /path/to/step_names.json
       "workflow_name": "github-build",
       "run_id": 8010151942,
       "job_id": 21880454544,
-      "step_number": 6,
+      "duration_seconds": 2476.0,
       "started_at": "2024-02-22T19:48:29Z",
       "completed_at": "2024-02-22T20:29:45Z",
-      "duration_seconds": 2476.0,
-      "status": "completed",
-      "conclusion": "success",
       "url": "https://api.github.com/repos/nickorefice/mastodon/actions/jobs/21880454544",
       "html_url": "https://github.com/nickorefice/mastodon/actions/runs/8010151942/job/21880454544"
-   },
-   {
-      "step_name": "Docker buildx build",
-      "repo_full_name": "user/repo2",
-      "workflow_name": "CI",
-      "run_id": 8010151942,
-      "job_id": 21880454544,
-      "step_number": 5,
-      "started_at": "2024-02-22T19:48:28Z",
-      "completed_at": "2024-02-22T19:48:29Z",
-      "duration_seconds": 100.0,
-      "status": "completed",
-      "conclusion": "success",
-      "url": "https://api.github.com/repos/nickorefice/mastodon/actions/jobs/21880454544",
-      "html_url": "https://github.com/nickorefice/mastodon/actions/runs/8010151942/job/21880454544"
-    }
+   }
 ]
+```
+
+### Monthly Summary Output:
+```json
+{
+   "2024-12": {
+      "stages": {
+         "Build and push": {
+            "count": 4,
+            "total_duration_seconds": 51.0
+         }
+      },
+      "total_duration_seconds": 51.0
+   }
+}
 ```
 
 --- 
 
 ## 💡 Recommendations
-To effectively use the GitHub Build Auditor, follow these steps:
-1. Initial Run:
-Run the script on as many repositories as possible with the `--unique-steps` option and possibly the `--filter-duration` option to identify as many steps involved with Docker builds.
-```bash
-python src/docker_build_time.py --unique-steps --filter-duration 10
-```
-2. Validate Step Names:
-Review the output to validate which step names are related to Docker builds.
-3. Create `step_names.json`:
-Review the output to validate which step names are related to Docker builds.
-4. Run with `--step-names-file`:
-Run the script with the `--step-names-file` option to approximate the total duration of Docker build steps across repositories.
-Example:
-```bash
-python src/docker_build_time.py --step-names-file src/step_names.json
-```
-5. Note on GitHub API:
-Be aware that the GitHub API archives step names beyond 90 days old, so the total duration will not include those older steps.
+1. **Initial Analysis**:
+   ```bash
+   python src/docker_build_time.py github --unique-steps --filter-duration 10
+   ```
+
+2. **Create Step Names File**:
+   Review the output and create a `step_names.json` with relevant steps.
+
+3. **Detailed Analysis**:
+   ```bash
+   python src/docker_build_time.py github --step-names-file step_names.json --monthly-summary
+   ```
+
+4. **Compare Platforms**:
+   Run analysis on both GitHub and Jenkins to compare build times.
 
 ---
 
 ## 📖 Documentation
 
 ### Available CLI Options:
-- `--unique-steps`: Export unique step names.
-- `--filter-duration <seconds>`: Focus on steps exceeding a set duration.
-- `--force-continue`: Skip errors without interrupting execution.
-- `--step-names-file <path>`: Provide step names for totals calculation.
+- `ci_tool`: Choose between `github` or `jenkins`
+- `--unique-steps`: Export unique step names
+- `--filter-duration <seconds>`: Focus on steps exceeding a set duration
+- `--force-continue`: Skip errors without interrupting execution
+- `--monthly-summary`: Generate monthly summary reports
+- `--step-names-file <path>`: Provide step names for totals calculation
 
 ---
 
 ## 🛡 Security
 
-- Use a **GitHub Personal Access Token** with minimal permissions.
-- Avoid committing your token to version control.
+- Use tokens with minimal required permissions
+- Store credentials securely in `.env` file
+- Avoid committing tokens to version control
 
 ---
 
 ## 🤝 Contributing
 
 We welcome contributions! To contribute:
-1. Fork the repository.
+1. Fork the repository
 2. Create a new branch:
    ```bash
    git checkout -b feature-branch
@@ -210,7 +210,7 @@ We welcome contributions! To contribute:
    ```bash
    git push origin feature-branch
    ```
-5. Create a pull request.
+5. Create a pull request
 
 ---
 
