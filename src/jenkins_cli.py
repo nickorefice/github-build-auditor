@@ -54,8 +54,8 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
             else:
                 build_stage_info = jenkins_api.all_jobs_stages_times([job])
 
-        # Store in dictionary
-        job_build_stage_data[job_name] = build_stage_info
+            # Store in dictionary
+            job_build_stage_data[job_name] = build_stage_info
 
 
         jenkins_api.output_json("General Job/Build Info", job_build_stage_data, "stage_durations.json")
