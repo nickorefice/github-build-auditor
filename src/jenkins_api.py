@@ -6,7 +6,10 @@ import json
 import datetime
 from collections import defaultdict
 from dotenv import load_dotenv
+from colorama import init, Fore, Style
 
+# Initialize colorama
+init()
 
 # Load environment variables
 load_dotenv()
@@ -23,7 +26,7 @@ class JenkinsAPI:
         self.version = self.server.get_version()
         self.auth = (JENKINS_USER, JENKINS_TOKEN)
         self.headers = {"Accept": "application/json"}
-        logging.info(f"Connected to Jenkins {JENKINS_URL} as {self.user['fullName']} (Version: {self.version})")
+        logging.info(f"{Fore.GREEN}Connected to Jenkins {JENKINS_URL} as {self.user['fullName']} (Version: {self.version}){Style.RESET_ALL}")
 
     def get_jobs(self):
         """ Fetch all Jenkins jobs """
@@ -32,7 +35,7 @@ class JenkinsAPI:
             pipeline_jobs = self.filter_workflow_jobs(jobs)
             return pipeline_jobs
         except jenkins.JenkinsException as e:
-            logging.error(f"Error retrieving jobs: {e}")
+            logging.error(f"{Fore.RED}Error retrieving jobs: {e}{Style.RESET_ALL}")
             return []
         
 
@@ -45,7 +48,7 @@ class JenkinsAPI:
                 for build in job_info["builds"]
             ]
         except jenkins.JenkinsException as e:
-            logging.error(f"Error retrieving builds for {job_name}: {e}")
+            logging.error(f"{Fore.RED}Error retrieving builds for {job_name}: {e}{Style.RESET_ALL}")
             return []
 
     def get_build_info(self, job_name, build_number):
@@ -54,7 +57,7 @@ class JenkinsAPI:
             build_info = self.server.get_build_info(job_name, build_number)
             return build_info
         except jenkins.JenkinsException as e:
-            logging.error(f"Error retrieving build #{build_number} for {job_name}: {e}")
+            logging.error(f"{Fore.RED}Error retrieving build #{build_number} for {job_name}: {e}{Style.RESET_ALL}")
             return {}
         
     
@@ -64,14 +67,14 @@ class JenkinsAPI:
         response = requests.get(url, auth=self.auth, headers=self.headers)
 
         if response.status_code != 200:
-            logging.error(f"Error fetching stage data for {job_name} build {build_number}: {response.status_code}")
+            logging.error(f"{Fore.RED}Error fetching stage data for {job_name} build {build_number}: {response.status_code}{Style.RESET_ALL}")
             return []
 
         data = response.json()
 
         return [
             {
-                **stage,  # ✅ Include all original fields
+                **stage,  # Include all original fields
                 "duration_seconds": (stage.get("durationMillis", 0) + stage.get("queueDurationMillis", 0)) / 1000,
                 "started_at": stage.get("startTimeMillis"),
                 "formatted_started_at": self.format_timestamp(stage.get("startTimeMillis")),
@@ -98,38 +101,38 @@ class JenkinsAPI:
             if job.get("_class") == "org.jenkinsci.plugins.workflow.job.WorkflowJob":
                 workflow_jobs.append(job)
             else:
-                logging.warning(f"Skipping non-pipeline job: {job.get('name', 'Unknown Job')} (Class: {job.get('_class')})")
+                logging.warning(f"{Fore.YELLOW}Skipping non-pipeline job: {job.get('name', 'Unknown Job')} (Class: {job.get('_class')}){Style.RESET_ALL}")
 
         return workflow_jobs
 
     def get_build_stage_data(self, job):
         """ Get builds and stage data for a specific job """
         build_data = []
-        pipeline_name = job.get("fullname", job.get("name", "Unknown Pipeline"))  # ✅ Extract pipeline name
+        pipeline_name = job.get("fullname", job.get("name", "Unknown Pipeline"))  # Extract pipeline name
 
         builds = self.get_job_builds(job["name"])
-        if not isinstance(builds, list):  # ✅ Ensure builds is a valid list
-            logging.error(f"Invalid build data for job {job['name']}: {builds}")
+        if not isinstance(builds, list):  # Ensure builds is a valid list
+            logging.error(f"{Fore.RED}Invalid build data for job {job['name']}: {builds}{Style.RESET_ALL}")
             return []
 
         for build in builds:
             stages = self.get_pipeline_stages_and_duration(job["name"], build["number"])
 
-            if not isinstance(stages, list):  # ✅ Ensure stages is a valid list
-                logging.error(f"Invalid stage data for job {job['name']} build {build['number']}: {stages}")
+            if not isinstance(stages, list):  # Ensure stages is a valid list
+                logging.error(f"{Fore.RED}Invalid stage data for job {job['name']} build {build['number']}: {stages}{Style.RESET_ALL}")
                 continue
 
             for stage in stages:
-                if isinstance(stage, dict):  # ✅ Ensure `stage` is a dictionary before unpacking
+                if isinstance(stage, dict):  # Ensure `stage` is a dictionary before unpacking
                     build_data.append({
-                        "pipeline_name": pipeline_name, # ✅ Include pipeline name
+                        "pipeline_name": pipeline_name, # Include pipeline name
                         **job, 
                         **build, 
                         **stage
                                                                 
                     })
                 else:
-                    logging.error(f"Skipping invalid stage entry in job {job['name']} build {build['number']}: {stage}")
+                    logging.error(f"{Fore.RED}Skipping invalid stage entry in job {job['name']} build {build['number']}: {stage}{Style.RESET_ALL}")
 
         return build_data
 
@@ -139,7 +142,7 @@ class JenkinsAPI:
         output_summary = [
             data for job in workflow_jobs
             for data in self.get_build_stage_data(job)
-            if isinstance(data, dict) and (filter_duration is None or data.get("duration_seconds", 0) > filter_duration)  # ✅ Ensure valid dictionary before filtering
+            if isinstance(data, dict) and (filter_duration is None or data.get("duration_seconds", 0) > filter_duration)  # Ensure valid dictionary before filtering
         ]
         return output_summary
     
@@ -148,9 +151,9 @@ class JenkinsAPI:
         with open(file_name, "w") as json_file:
             try:
                 json.dump(content, json_file, indent=4)
-                print(f"✅ {print_message} successfully written to {file_name}")
+                print(f"{Fore.GREEN}✅ {print_message} successfully written to {file_name}{Style.RESET_ALL}")
             except Exception as e:
-                logging.error(f"Error writing JSON output: {e}")
+                logging.error(f"{Fore.RED}Error writing JSON output: {e}{Style.RESET_ALL}")
 
     def extract_unique_stage_names(self, job_data):
         """ Extracts unique stage names from the given Jenkins job data. """
@@ -173,13 +176,13 @@ class JenkinsAPI:
             try:
                 with open(step_names_file, "r") as f:
                     step_names = json.load(f)
-                logging.info(f"✅ Loaded step names from {step_names_file}")
+                logging.info(f"{Fore.GREEN}✅ Loaded step names from {step_names_file}{Style.RESET_ALL}")
                 return step_names
             except json.JSONDecodeError:
-                logging.error(f"❌ Invalid JSON format in {step_names_file}. Exiting.")
+                logging.error(f"{Fore.RED}❌ Invalid JSON format in {step_names_file}. Exiting.{Style.RESET_ALL}")
                 return []
         else:
-            logging.error(f"❌ File {step_names_file} does not exist. Exiting.")
+            logging.error(f"{Fore.RED}❌ File {step_names_file} does not exist. Exiting.{Style.RESET_ALL}")
             return []
 
     def get_monthly_stage_summary(self, data, filter_steps=None):
@@ -206,19 +209,19 @@ class JenkinsAPI:
                 month_key = stage_date.strftime("%Y-%m")  # Format as YYYY-MM for grouping
                 stage_name = stage.get("name", "Unknown Stage")
 
-                 # ✅ Filter stages based on `filter_steps` list
+                 # Filter stages based on `filter_steps` list
                 if filter_steps and stage_name not in filter_steps:
                     continue  # Skip stages not in the filter list
 
                 duration = stage.get("duration_seconds", 0)
 
-                # ✅ Increment count of stage executions
+                # Increment count of stage executions
                 monthly_summary[month_key]["stages"][stage_name]["count"] += 1
 
-                # ✅ Sum the total duration for the stage
+                # Sum the total duration for the stage
                 monthly_summary[month_key]["stages"][stage_name]["total_duration"] += duration
 
-                # ✅ Add to overall total duration for the month
+                # Add to overall total duration for the month
                 monthly_summary[month_key]["total_duration_seconds"] += duration
 
         # Convert defaultdict to regular dict for JSON-friendly output
@@ -235,13 +238,11 @@ class JenkinsAPI:
             }
             for month, data in monthly_summary.items()
         }
-
-
     
 if __name__ == "__main__":
     jenkins_api = JenkinsAPI()
 
-    print("Fetching all Jenkins jobs...")
+    print(f"{Fore.CYAN}Fetching all Jenkins jobs...{Style.RESET_ALL}")
     # Get Jobs
     jobs = jenkins_api.get_jobs()
     job_build_stage_data = {} 
