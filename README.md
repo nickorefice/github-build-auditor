@@ -92,6 +92,8 @@ python3 src/docker_build_time.py jenkins
 - `--force-continue`: Skip errors without prompting the user
 - `--monthly-summary`: Generate monthly summary of step durations
 - `--step-names-file <path>`: Path to a JSON file containing step names to calculate totals
+- `--skip-labels`: Labels of jobs to skip. You can specify multiple labels by repeating the option.
+
 
 ### Example Commands:
 ```bash
@@ -106,6 +108,9 @@ python3 src/docker_build_time.py github --monthly-summary
 
 # Full analysis with specific steps
 python3 src/docker_build_time.py github --step-names-file step_names.json --monthly-summary
+
+# Skip Github jobs with specifed labels
+python3 src/cli.py --skip-labels "self-hosted" --skip-labels "another-label"
 ```
 
 ### Output Color Coding:
