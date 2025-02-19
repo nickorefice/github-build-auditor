@@ -46,13 +46,20 @@ def process_workflow_runs(github_api, repo_full_name, workflow):
     logging.info(f"Found {len(workflow_runs)} workflow runs for workflow {workflow['name']}")
     return workflow_runs
 
-def process_jobs(github_api, repo_full_name, run_id):
+def process_jobs(github_api, repo_full_name, run_id, skip_labels):
     jobs = github_api.get_jobs(repo_full_name, run_id)
     if not jobs:
         logging.info(f"No jobs found in workflow run {run_id}")
         return []
-    logging.info(f"Found {len(jobs)} jobs in workflow run {run_id}")
-    return jobs
+    filtered_jobs = []
+    for job in jobs:
+        job_labels = job.get('labels', [])
+        if any(label in skip_labels for label in job_labels):
+            logging.info(f"Skipping job {job['id']} due to label match: {job_labels}")
+            continue
+        filtered_jobs.append(job)
+    logging.info(f"Found {len(filtered_jobs)} jobs in workflow run {run_id} after filtering")
+    return filtered_jobs
 
 def process_steps(job, step_names, step_name_totals):
     output_data = []
@@ -69,13 +76,16 @@ def process_steps(job, step_names, step_name_totals):
         step_html_url = job['html_url']
         duration = None
         if step_started_at and step_completed_at and step_started_at != 'null' and step_completed_at != 'null':
-            start_time = datetime.strptime(step_started_at, '%Y-%m-%dT%H:%M:%SZ')
-            end_time = datetime.strptime(step_completed_at, '%Y-%m-%dT%H:%M:%SZ')
-            duration = (end_time - start_time).total_seconds()
-            month_key = start_time.strftime('%Y-%m')
-            if step_name in step_names and duration is not None:
-                step_name_totals[month_key][step_name]['duration'] += duration
-                step_name_totals[month_key][step_name]['count'] += 1
+            try:
+                start_time = datetime.strptime(step_started_at, '%Y-%m-%dT%H:%M:%SZ')
+                end_time = datetime.strptime(step_completed_at, '%Y-%m-%dT%H:%M:%SZ')
+                duration = (end_time - start_time).total_seconds()
+                month_key = start_time.strftime('%Y-%m')
+                if step_name in step_names and duration is not None:
+                    step_name_totals[month_key][step_name]['duration'] += duration
+                    step_name_totals[month_key][step_name]['count'] += 1
+            except ValueError as e:
+                logging.error(f"Error parsing dates for step {step_name} in job {job['id']}: {e}")
         step_data = {
             "step_name": step_name,
             "repo_full_name": job['repo_full_name'],
@@ -99,7 +109,8 @@ def process_steps(job, step_names, step_name_totals):
 @click.option('--force-continue', is_flag=True, help="Force continue even if there's an error without prompting the user")
 @click.option('--filter-duration', type=int, default=0, help="Filter for steps with duration longer than the specified value in seconds")
 @click.option('--step-names-file', type=click.Path(exists=True), help="Path to JSON file containing step names to calculate totals")
-def main(unique_steps, force_continue, filter_duration, step_names_file):
+@click.option('--skip-labels', multiple=True, help="Labels of jobs to skip")
+def main(unique_steps, force_continue, filter_duration, step_names_file, skip_labels):
     username = os.getenv('GITHUB_USERNAME')
     if not username:
         raise ValueError("GitHub username must be set in the .env file")
@@ -152,7 +163,7 @@ def main(unique_steps, force_continue, filter_duration, step_names_file):
                             for run in workflow_runs:
                                 run_id = run['id']
                                 try:
-                                    jobs = process_jobs(github_api, repo_full_name, run_id)
+                                    jobs = process_jobs(github_api, repo_full_name, run_id, skip_labels)
                                     total_jobs_assessed += len(jobs)
                                     print(f"        {Fore.MAGENTA}Workflow run: {run_id}{Style.RESET_ALL}")
                                     for job in jobs:
