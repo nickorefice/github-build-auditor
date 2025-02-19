@@ -73,7 +73,7 @@ def process_steps(job, step_names, step_name_totals):
             end_time = datetime.strptime(step_completed_at, '%Y-%m-%dT%H:%M:%SZ')
             duration = (end_time - start_time).total_seconds()
             month_key = start_time.strftime('%Y-%m')
-            if step_name in step_names:
+            if step_name in step_names and duration is not None:
                 step_name_totals[month_key][step_name]['duration'] += duration
                 step_name_totals[month_key][step_name]['count'] += 1
         step_data = {
