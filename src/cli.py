@@ -68,12 +68,12 @@ def process_steps(job, step_names, step_name_totals):
         step_url = job['url']
         step_html_url = job['html_url']
         duration = None
-        if step_started_at and step_completed_at:
+        if step_started_at and step_completed_at and step_started_at != 'null' and step_completed_at != 'null':
             start_time = datetime.strptime(step_started_at, '%Y-%m-%dT%H:%M:%SZ')
             end_time = datetime.strptime(step_completed_at, '%Y-%m-%dT%H:%M:%SZ')
             duration = (end_time - start_time).total_seconds()
             month_key = start_time.strftime('%Y-%m')
-            if step_name in step_names:
+            if step_name in step_names and duration is not None:
                 step_name_totals[month_key][step_name]['duration'] += duration
                 step_name_totals[month_key][step_name]['count'] += 1
         step_data = {
