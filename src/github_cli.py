@@ -111,7 +111,8 @@ def process_jobs(github_api, repo_full_name, run_id):
 @click.option('--filter-duration', type=int, default=0, help="Filter steps longer than the specified duration")
 @click.option("--monthly-summary", is_flag=True, help="Generate monthly summary including all steps")
 @click.option("--step-names-file", type=click.Path(), default=None, required=False, help="Either Path to JSON file containing step names or just straight flag to calculate totals")
-def main(unique_steps, force_continue, filter_duration, monthly_summary, step_names_file):
+@click.option('--skip-labels', multiple=True, help="Labels of jobs to skip")
+def main(unique_steps, force_continue, filter_duration, monthly_summary, step_names_file, skip_labels):
     """ Main function to process GitHub workflow jobs with optional step name filtering. """
     
     github_api = GitHubAPI()
@@ -142,7 +143,8 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
                             run_id = run['id']
                             try:
                                 jobs = process_jobs(github_api, repo_full_name, run_id)
-                                for job in jobs:
+                                filtered_jobs = filter_jobs(jobs, skip_labels)
+                                for job in filtered_jobs:
                                     logging.info(f"{Fore.CYAN}Processing job: {job['url']}{Style.RESET_ALL}")
                                     if not job.get('steps'):
                                         logging.warning(f"{Fore.YELLOW}No steps found for job {job['id']}. Logs may have expired.{Style.RESET_ALL}")
@@ -152,7 +154,7 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
                                     job['workflow_name'] = workflow['name']
                                     job['run_id'] = run_id
 
-                                    steps_data = process_steps(job, step_names, step_name_totals)
+                                    steps_data, actions_assessed = process_steps(job, step_names, step_name_totals)
                                     output_data.extend(steps_data)
 
                             except Exception as e:
@@ -170,10 +172,18 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
 def process_steps(job, step_names, step_name_totals):
     """ Processes job steps, extracts metadata, and computes durations. """
     output_data = []
+    total_actions_assessed = 0
     for step in job['steps']:
+        total_actions_assessed += 1
         step_name = step['name']
-        duration = calculate_duration(step.get('started_at'), step.get('completed_at'))
-
+        step_number = step['number']
+        step_started_at = step.get('started_at')
+        step_completed_at = step.get('completed_at')
+        step_status = step.get('status')
+        step_conclusion = step.get('conclusion')
+        step_url = job['url']
+        step_html_url = job['html_url']
+        duration = calculate_duration(step_started_at, step_completed_at)
         step_data = {
             "step_name": step_name,
             "repo_full_name": job['repo_full_name'],
@@ -181,22 +191,25 @@ def process_steps(job, step_names, step_name_totals):
             "run_id": job['run_id'],
             "job_id": job['id'],
             "duration_seconds": duration,
-            "started_at": step.get('started_at'),
-            "completed_at": step.get('completed_at'),
-            "url": job['url'],
-            "html_url": job['html_url']
+            "started_at": step_started_at,
+            "completed_at": step_completed_at,
+            "status": step_status,
+            "conclusion": step_conclusion,
+            "url": step_url,
+            "html_url": step_html_url
         }
         output_data.append(step_data)
-        step_name_totals[step_name] += duration
+    return output_data, total_actions_assessed
 
-    return output_data
-
-def calculate_duration(start, end):
-    """ Calculates duration between two timestamps. """
-    if start and end:
-        start_time = datetime.strptime(start, '%Y-%m-%dT%H:%M:%SZ')
-        end_time = datetime.strptime(end, '%Y-%m-%dT%H:%M:%SZ')
-        return (end_time - start_time).total_seconds()
+def calculate_duration(started_at, completed_at):
+    if started_at and completed_at and started_at != 'null' and completed_at != 'null':
+        try:
+            start_time = datetime.strptime(started_at, '%Y-%m-%dT%H:%M:%SZ')
+            end_time = datetime.strptime(completed_at, '%Y-%m-%dT%H:%M:%SZ')
+            return (end_time - start_time).total_seconds()
+        except ValueError as e:
+            logging.error(f"Error parsing dates: {e}")
+            return None
     return None
 
 def save_output_json(output_data, step_name_totals, unique_steps, filter_duration, step_names_file, monthly_summary):
@@ -276,6 +289,17 @@ def handle_error(message, force_continue):
     if not force_continue:
         raise SystemExit(f"{Fore.RED}Exiting due to error.{Style.RESET_ALL}")
     logging.warning(f"{Fore.YELLOW}Continuing execution...{Style.RESET_ALL}")
+
+def filter_jobs(jobs, skip_labels):
+    filtered_jobs = []
+    for job in jobs:
+        job_labels = job.get('labels', [])
+        if any(label in skip_labels for label in job_labels):
+            logging.info(f"Skipping job {job['id']} due to label match: {job_labels}")
+            continue
+        filtered_jobs.append(job)
+    logging.info(f"Found {len(filtered_jobs)} jobs after filtering")
+    return filtered_jobs
 
 if __name__ == "__main__":
     main()
