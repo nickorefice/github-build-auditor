@@ -9,7 +9,7 @@ from datetime import datetime
 from colorama import init, Fore, Style
 
 # Initialize colorama
-init()
+init(autoreset=True)
 
 # Load environment variables
 load_dotenv()
@@ -112,7 +112,9 @@ def process_jobs(github_api, repo_full_name, run_id):
 @click.option("--monthly-summary", is_flag=True, help="Generate monthly summary including all steps")
 @click.option("--step-names-file", type=click.Path(), default=None, required=False, help="Either Path to JSON file containing step names or just straight flag to calculate totals")
 @click.option('--skip-labels', multiple=True, help="Labels of jobs to skip")
-def main(unique_steps, force_continue, filter_duration, monthly_summary, step_names_file, skip_labels):
+@click.option('--filter-names', multiple=True, help="Names of workflows to include")
+@click.option('--filter-paths', multiple=True, help="Paths of workflows to include")
+def main(unique_steps, force_continue, filter_duration, monthly_summary, step_names_file, skip_labels, filter_names, filter_paths):
     """ Main function to process GitHub workflow jobs with optional step name filtering. """
     
     github_api = GitHubAPI()
@@ -134,7 +136,7 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
                 logging.info(f"{Fore.CYAN}Processing repository: {repo_full_name}{Style.RESET_ALL}")
 
                 try:
-                    workflows = github_api.get_workflows(repo_full_name)
+                    workflows = github_api.get_workflows(repo_full_name, filter_names, filter_paths)
                     for workflow in workflows:
                         logging.info(f"{Fore.CYAN}Workflow: {workflow['name']} (URL: {workflow['url']}){Style.RESET_ALL}")
                         workflow_runs = process_workflow_runs(github_api, repo_full_name, workflow)
