@@ -1,7 +1,7 @@
 import os
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict, OrderedDict
 import click
 from dotenv import load_dotenv
@@ -121,15 +121,28 @@ def process_jobs(github_api, repo_full_name, run_id):
 @click.option('--skip-labels', multiple=True, help="Labels of jobs to skip")
 @click.option('--filter-names', multiple=True, help="Names of workflows to include")
 @click.option('--filter-paths', multiple=True, help="Paths of workflows to include")
-def main(unique_steps, force_continue, filter_duration, monthly_summary, step_names_file, skip_labels, filter_names, filter_paths):
+@click.option('--since', type=click.DateTime(formats=["%Y-%m-%d"]), help="Fetch workflow runs since this date (YYYY-MM-DD)")
+def main(unique_steps, force_continue, filter_duration, monthly_summary, step_names_file, skip_labels, filter_names, filter_paths, since):
     """ Main function to process GitHub workflow jobs with optional step name filtering. """
     
-    github_api = GitHubAPI()
-    output_data = []
-    step_name_totals = defaultdict(float)
+    token = os.getenv('GITHUB_TOKEN')
+    if not token:
+        raise ValueError("GitHub token must be set in the environment variables")
 
-    # Load step names if provided
-    step_names = load_step_names(step_names_file) if step_names_file else []
+    github_api = GitHubAPI(token)
+    output_data = []
+    total_actions_assessed = 0
+    total_jobs_assessed = 0
+    total_empty_jobs = 0
+    success = True
+
+    step_name_totals = defaultdict(lambda: defaultdict(lambda: {'duration': 0.0, 'count': 0}))
+
+    if step_names_file:
+        with open(step_names_file, 'r') as f:
+            step_names = json.load(f)
+    else:
+        step_names = []
 
     # Fetch repositories
     repos = fetch_repositories(github_api)
@@ -153,10 +166,12 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
                             try:
                                 jobs = process_jobs(github_api, repo_full_name, run_id)
                                 filtered_jobs = filter_jobs(jobs, skip_labels)
+                                total_jobs_assessed += len(filtered_jobs)
                                 for job in filtered_jobs:
                                     logging.info(f"{Fore.CYAN}Processing job: {job['url']}{Style.RESET_ALL}")
                                     if not job.get('steps'):
                                         logging.warning(f"{Fore.YELLOW}No steps found for job {job['id']}. Logs may have expired.{Style.RESET_ALL}")
+                                        total_empty_jobs += 1
                                         continue
 
                                     job['repo_full_name'] = repo_full_name
@@ -165,6 +180,7 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
 
                                     steps_data, actions_assessed = process_steps(job, step_names, step_name_totals)
                                     output_data.extend(steps_data)
+                                    total_actions_assessed += actions_assessed
 
                             except Exception as e:
                                 handle_error(f"Error fetching jobs for run {run_id} in {repo_full_name}: {e}", force_continue)
@@ -177,6 +193,50 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
 
     # Save JSON Output
     save_output_json(output_data, step_name_totals, unique_steps, filter_duration, step_names_file, monthly_summary)
+
+    # Write output data to a JSON file
+    if success:
+        if unique_steps:
+            unique_steps_data = []
+            seen_steps = set()
+            for step in output_data:
+                if step['step_name'] not in seen_steps:
+                    unique_steps_data.append(step)
+                    seen_steps.add(step['step_name'])
+            output_data = unique_steps_data
+
+        # Filter steps by minimum duration
+        if filter_duration > 0:
+            output_data = [step for step in output_data if step['duration_seconds'] > filter_duration]
+
+        # Filter steps by step names if step_names_file is provided
+        if step_names_file:
+            output_data = [step for step in output_data if step['step_name'] in step_names]
+
+        with open('steps_output.json', 'w') as f:
+            json.dump(output_data, f, indent=4)
+
+        # Log and write totals for specified step names by month
+        step_name_totals_by_month = defaultdict(lambda: defaultdict(lambda: {'duration': 0.0, 'count': 0}))
+        for month_key, step_totals in step_name_totals.items():
+            for step_name, totals in step_totals.items():
+                step_name_totals_by_month[month_key][step_name] = {
+                    'duration': totals['duration'],
+                    'count': totals['count']
+                }
+
+        # Sort the step_name_totals_by_month by date in descending order
+        sorted_step_name_totals_by_month = OrderedDict(sorted(step_name_totals_by_month.items(), reverse=True))
+
+        with open('step_name_totals.json', 'w') as f:
+            json.dump(sorted_step_name_totals_by_month, f, indent=4)
+
+        print(f"\n{Fore.GREEN}Summary:{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Total actions assessed: {Fore.YELLOW}{total_actions_assessed}{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Total jobs assessed: {Fore.YELLOW}{total_jobs_assessed}{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Total empty jobs (logs may have expired): {Fore.YELLOW}{total_empty_jobs}{Style.RESET_ALL}")
+    else:
+        print(f"{Fore.RED}Script execution failed. No summary information will be logged.{Style.RESET_ALL}")
 
 def process_steps(job, step_names, step_name_totals):
     """ Processes job steps, extracts metadata, and computes durations. """
