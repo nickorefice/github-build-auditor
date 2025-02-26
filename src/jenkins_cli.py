@@ -11,20 +11,24 @@ from jenkins_api import JenkinsAPI
 load_dotenv()
 
 # Configure logging
+file_handler = logging.FileHandler("project.log")
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter('%(message)s'))
+
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("project.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[file_handler, console_handler]
 )
 
 @click.command()
 @click.option('--unique-steps', is_flag=True, help="Print unique step names to JSON")
 @click.option("--force-continue", is_flag=True, help="Continue execution even if Jenkins API fails")
 @click.option('--filter-duration', type=int, default=0, help="Filter for steps with duration longer than the specified value in seconds")
-@click.option("--monthly-summary", is_flag=True, default=0, help="Provide a summary of how long each step took to run within a given month.")  # ✅ Added Flag Mode
+@click.option("--monthly-summary", is_flag=True, default=0, help="Provide a summary of how long each step took to run within a given month.")
 @click.option("--step-names-file", type=click.Path(), default=None, required=False, help="Path to JSON file containing step names")
 def main(unique_steps, force_continue, filter_duration, monthly_summary, step_names_file):
     JENKINS_URL = os.getenv("JENKINS_URL")
@@ -40,7 +44,7 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
 
     # Initialize empty data structures in case of failure
     jobs = []
-    all_jobs_builds_stages = {}
+    all_jobs_build_stages = {}
 
     try:
         jobs = jenkins_api.get_jobs()
@@ -57,7 +61,6 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
             # Store in dictionary
             job_build_stage_data[job_name] = build_stage_info
 
-
         jenkins_api.output_json("General Job/Build Info", job_build_stage_data, "stage_durations.json")
 
         if unique_steps:
@@ -67,12 +70,10 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
         # Get step names if provided from step_name_file
         step_names = jenkins_api.load_step_names(step_names_file) if step_names_file else []
 
-        # ✅ Generate Monthly Summary ONLY if `--step-names-file` is passed
+        # Generate Monthly Summary ONLY if `--step-names-file` is passed
         if step_names_file or monthly_summary:
             runtime_calcs = jenkins_api.get_monthly_stage_summary(job_build_stage_data, filter_steps=step_names)
             jenkins_api.output_json("Monthly Totals", runtime_calcs, "steps_output.json")
-        
-       
         
     except Exception as e:
         logging.error(f"Error fetching Jenkins API data: {e}")
@@ -81,7 +82,6 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
             raise SystemExit("Exiting due to Jenkins API failure.")
 
         print("Continuing execution with empty job data...")
-
 
     print("Completed fetching all Jenkins Info, ENJOY!")
 

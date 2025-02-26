@@ -1,11 +1,11 @@
 import os
 import logging
 import json
+from datetime import datetime
+from collections import defaultdict, OrderedDict
 import click
-from collections import defaultdict
 from dotenv import load_dotenv
 from github_api import GitHubAPI
-from datetime import datetime
 from colorama import init, Fore, Style
 
 # Initialize colorama
@@ -15,10 +15,17 @@ init(autoreset=True)
 load_dotenv()
 
 # Configure logging
+file_handler = logging.FileHandler("project.log")
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter('%(message)s'))
+
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("project.log"), logging.StreamHandler()],
+    handlers=[file_handler, console_handler]
 )
 
 def fetch_repositories(github_api):
