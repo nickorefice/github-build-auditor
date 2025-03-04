@@ -2,7 +2,9 @@ import os
 import requests
 import logging
 import time
+from datetime import datetime
 from dotenv import load_dotenv
+from colorama import Fore, Style
 
 load_dotenv()
 
@@ -10,9 +12,9 @@ GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
 GITHUB_API_URL = "https://api.github.com"
 
 class GitHubAPI:
-    def __init__(self, GITHUB_TOKEN):
+    def __init__(self, token):
         self.headers = {
-            "Authorization": f"token {GITHUB_TOKEN}",
+            "Authorization": f"token {token}",
             "Accept": "application/vnd.github.v3+json"
         }
 
@@ -46,7 +48,7 @@ class GitHubAPI:
         self._handle_response(response)
         return self._paginate(url)
 
-    def get_workflows(self, repo_full_name, filter_names=None, filter_paths=None):
+    def get_workflows(self, repo_full_name, filter_names=None, filter_paths=None, since=None):
         url = f"{GITHUB_API_URL}/repos/{repo_full_name}/actions/workflows"
         response = requests.get(url, headers=self.headers)
         self._handle_response(response)
@@ -67,14 +69,50 @@ class GitHubAPI:
         return workflows
 
     def get_workflow_runs(self, repo_full_name, workflow_id, since=None):
+        """
+        Fetches workflow runs for a given workflow in a repository, optionally filtering by creation date,
+        and only including runs that are completed and have a conclusion of success or action_required.
+        
+        :param repo_full_name: Full repository name (e.g., "docker/cli").
+        :param workflow_id: The ID of the workflow.
+        :param since: A datetime object. Only workflow runs created on or after this date will be returned.
+        :return: List of workflow runs.
+        """
         url = f"{GITHUB_API_URL}/repos/{repo_full_name}/actions/workflows/{workflow_id}/runs"
-        params = {}
+        params = {
+            "status": "completed"  # Only return workflow runs with a status of completed.
+        }
         if since:
+            # Using the GitHub API's created query parameter to only return runs created after the given date.
             params['created'] = f">{since.strftime('%Y-%m-%dT%H:%M:%SZ')}"
-        return self._paginate(url, key='workflow_runs')
-
+        
+        response = requests.get(url, headers=self.headers, params=params)
+        self._handle_response(response)
+        workflow_runs = response.json().get('workflow_runs', [])
+        
+        # Ensure that the returned runs are created on or after the since date:
+        if since:
+            workflow_runs = [
+                run for run in workflow_runs
+                if datetime.strptime(run['created_at'], '%Y-%m-%dT%H:%M:%SZ') >= since
+            ]
+        
+        # Filter to only include runs with conclusion either 'success' or 'action_required'
+        allowed_conclusions = {"success", "action_required"}
+        filtered_runs = [
+            run for run in workflow_runs
+            if run.get('conclusion') in allowed_conclusions
+        ]
+        
+        return filtered_runs
+    
     def get_jobs(self, repo_full_name, run_id):
         url = f"{GITHUB_API_URL}/repos/{repo_full_name}/actions/runs/{run_id}/jobs"
+        response = requests.get(url, headers=self.headers)
+        if response.status_code == 404:
+            logging.warning(f"{Fore.YELLOW}⚠️ Job not found for run {run_id} in {repo_full_name}. Logs may have expired.{Style.RESET_ALL}")
+            return []
+        self._handle_response(response)
         return self._paginate(url, key='jobs')
 
     def search_files(self, repo_full_name, query):

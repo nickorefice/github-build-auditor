@@ -133,3 +133,8 @@ step_name_totals.json
 stage_durations.json
 
 .gitattributes
+
+repositories.json
+stage_durations.json
+step_names.json
+monthly_summary.json

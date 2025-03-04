@@ -34,6 +34,33 @@ def fetch_repositories(github_api):
     logging.info(f"{Fore.GREEN}✅ Total repositories fetched: {len(repos)}{Style.RESET_ALL}")
     return repos
 
+def parse_repositories(repos):
+    """ Parse repositories to keep only full_name, html_url, and description. """
+    parsed_repos = []
+    for repo in repos:
+        parsed_repo = {
+            "full_name": repo.get("full_name"),
+            "html_url": repo.get("html_url"),
+            "description": repo.get("description")
+        }
+        parsed_repos.append(parsed_repo)
+    return parsed_repos
+
+def load_repositories_from_file(file_path):
+    """ Load repositories from a JSON file. """
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, "r") as f:
+                repos = json.load(f)
+            logging.info(f"{Fore.GREEN}✅ Loaded repositories from {file_path}{Style.RESET_ALL}")
+            return repos
+        except json.JSONDecodeError:
+            logging.error(f"{Fore.RED}❌ Invalid JSON format in {file_path}. Exiting.{Style.RESET_ALL}")
+            return []
+    else:
+        logging.error(f"{Fore.RED}❌ File {file_path} does not exist. Exiting.{Style.RESET_ALL}")
+        return []
+
 def group_repositories_by_namespace(repos, namespaces):
     """
     Groups repositories by their namespace (organization/user).
@@ -72,13 +99,14 @@ def select_namespaces(repos):
     
     return selected_namespaces
 
-def process_workflow_runs(github_api, repo_full_name, workflow):
+def process_workflow_runs(github_api, repo_full_name, workflow, since=None):
     """
     Fetches workflow runs for a given workflow in a repository.
 
     :param github_api: Instance of GitHubAPI.
     :param repo_full_name: Full repository name (e.g., "org/repo").
     :param workflow: Dictionary containing workflow metadata.
+    :param since: Datetime object to filter workflow runs.
     :return: List of workflow runs.
     """
     workflow_id = workflow.get('id')
@@ -86,7 +114,7 @@ def process_workflow_runs(github_api, repo_full_name, workflow):
         logging.warning(f"{Fore.YELLOW}⚠️ Workflow {workflow.get('name', 'Unknown')} has no ID. Skipping.{Style.RESET_ALL}")
         return []
 
-    workflow_runs = github_api.get_workflow_runs(repo_full_name, workflow_id)
+    workflow_runs = github_api.get_workflow_runs(repo_full_name, workflow_id, since)
     if not workflow_runs:
         logging.info(f"{Fore.BLUE}ℹ️ No workflow runs found for {workflow['name']} in {repo_full_name}.{Style.RESET_ALL}")
         return []
@@ -122,7 +150,9 @@ def process_jobs(github_api, repo_full_name, run_id):
 @click.option('--filter-names', multiple=True, help="Names of workflows to include")
 @click.option('--filter-paths', multiple=True, help="Paths of workflows to include")
 @click.option('--since', type=click.DateTime(formats=["%Y-%m-%d"]), help="Fetch workflow runs since this date (YYYY-MM-DD)")
-def main(unique_steps, force_continue, filter_duration, monthly_summary, step_names_file, skip_labels, filter_names, filter_paths, since):
+@click.option('--dump-repos', is_flag=True, help="Dump all repositories to a JSON file")
+@click.option('--repos-file', type=click.Path(), default=None, help="Path to JSON file containing repositories to process")
+def main(unique_steps, force_continue, filter_duration, monthly_summary, step_names_file, skip_labels, filter_names, filter_paths, since, dump_repos, repos_file):
     """ Main function to process GitHub workflow jobs with optional step name filtering. """
     
     token = os.getenv('GITHUB_TOKEN')
@@ -130,6 +160,22 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
         raise ValueError("GitHub token must be set in the environment variables")
 
     github_api = GitHubAPI(token)
+
+    # Dump repositories if --dump-repos is provided
+    if dump_repos:
+        repos = fetch_repositories(github_api)
+        parsed_repos = parse_repositories(repos)
+        with open('repositories.json', 'w') as f:
+            json.dump(parsed_repos, f, indent=4)
+        logging.info(f"{Fore.GREEN}✅ Repositories dumped to repositories.json{Style.RESET_ALL}")
+        return
+
+    # Load repositories from file if --repos-file is provided
+    if repos_file:
+        repos = load_repositories_from_file(repos_file)
+    else:
+        repos = fetch_repositories(github_api)
+
     output_data = []
     total_actions_assessed = 0
     total_jobs_assessed = 0
@@ -144,8 +190,6 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
     else:
         step_names = []
 
-    # Fetch repositories
-    repos = fetch_repositories(github_api)
     namespace_repos = group_repositories_by_namespace(repos, select_namespaces(repos))
 
     try:
@@ -156,10 +200,10 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
                 logging.info(f"{Fore.CYAN}Processing repository: {repo_full_name}{Style.RESET_ALL}")
 
                 try:
-                    workflows = github_api.get_workflows(repo_full_name, filter_names, filter_paths)
+                    workflows = github_api.get_workflows(repo_full_name, filter_names, filter_paths, since)
                     for workflow in workflows:
                         logging.info(f"{Fore.CYAN}Workflow: {workflow['name']} (URL: {workflow['url']}){Style.RESET_ALL}")
-                        workflow_runs = process_workflow_runs(github_api, repo_full_name, workflow)
+                        workflow_runs = process_workflow_runs(github_api, repo_full_name, workflow, since)
 
                         for run in workflow_runs:
                             run_id = run['id']
