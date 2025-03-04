@@ -20,7 +20,7 @@ file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
+console_handler.setLevel(logging.WARNING)  # Set console handler to WARNING level
 console_handler.setFormatter(logging.Formatter('%(message)s'))
 
 logging.basicConfig(
@@ -31,7 +31,7 @@ logging.basicConfig(
 def fetch_repositories(github_api):
     """ Fetch all repositories from GitHub API. """
     repos = github_api.get_repositories()
-    logging.info(f"{Fore.GREEN}✅ Total repositories fetched: {len(repos)}{Style.RESET_ALL}")
+    logging.info(f"✅ Total repositories fetched: {len(repos)}")
     return repos
 
 def parse_repositories(repos):
@@ -52,13 +52,13 @@ def load_repositories_from_file(file_path):
         try:
             with open(file_path, "r") as f:
                 repos = json.load(f)
-            logging.info(f"{Fore.GREEN}✅ Loaded repositories from {file_path}{Style.RESET_ALL}")
+            logging.info(f"✅ Loaded repositories from {file_path}")
             return repos
         except json.JSONDecodeError:
-            logging.error(f"{Fore.RED}❌ Invalid JSON format in {file_path}. Exiting.{Style.RESET_ALL}")
+            logging.error(f"❌ Invalid JSON format in {file_path}. Exiting.")
             return []
     else:
-        logging.error(f"{Fore.RED}❌ File {file_path} does not exist. Exiting.{Style.RESET_ALL}")
+        logging.error(f"❌ File {file_path} does not exist. Exiting.")
         return []
 
 def group_repositories_by_namespace(repos, namespaces):
@@ -75,7 +75,7 @@ def group_repositories_by_namespace(repos, namespaces):
         namespace = repo['full_name'].split('/')[0]  # Extract namespace
         if namespace in namespaces:
             namespace_repos[namespace].append(repo)
-            logging.info(f"{Fore.GREEN}✅ Added repo to namespace {namespace}: {repo['full_name']}{Style.RESET_ALL}")
+            logging.info(f"✅ Added repo to namespace {namespace}: {repo['full_name']}")
 
     return namespace_repos
 
@@ -88,14 +88,14 @@ def select_namespaces(repos):
     """
     available_namespaces = set(repo['full_name'].split('/')[0] for repo in repos)
     
-    logging.info(f"{Fore.CYAN}Available namespaces: {', '.join(available_namespaces)}{Style.RESET_ALL}")
+    logging.info(f"Available namespaces: {', '.join(available_namespaces)}")
 
     selected_namespaces = []
     for namespace in sorted(available_namespaces):
-        if click.confirm(f"{Fore.YELLOW}Assess repositories in {namespace}?{Style.RESET_ALL}", default=False):
+        if click.confirm(f"Assess repositories in {namespace}?", default=False):
             selected_namespaces.append(namespace)
 
-    logging.info(f"{Fore.GREEN}✅ Selected namespaces: {', '.join(selected_namespaces)}{Style.RESET_ALL}")
+    logging.info(f"✅ Selected namespaces: {', '.join(selected_namespaces)}")
     
     return selected_namespaces
 
@@ -111,15 +111,15 @@ def process_workflow_runs(github_api, repo_full_name, workflow, since=None):
     """
     workflow_id = workflow.get('id')
     if not workflow_id:
-        logging.warning(f"{Fore.YELLOW}⚠️ Workflow {workflow.get('name', 'Unknown')} has no ID. Skipping.{Style.RESET_ALL}")
+        logging.warning(f"⚠️ Workflow {workflow.get('name', 'Unknown')} has no ID. Skipping.")
         return []
 
     workflow_runs = github_api.get_workflow_runs(repo_full_name, workflow_id, since)
     if not workflow_runs:
-        logging.info(f"{Fore.BLUE}ℹ️ No workflow runs found for {workflow['name']} in {repo_full_name}.{Style.RESET_ALL}")
+        logging.info(f"ℹ️ No workflow runs found for {workflow['name']} in {repo_full_name}.")
         return []
 
-    logging.info(f"{Fore.GREEN}✅ Found {len(workflow_runs)} workflow runs for {workflow['name']} in {repo_full_name}.{Style.RESET_ALL}")
+    logging.info(f"✅ Found {len(workflow_runs)} workflow runs for {workflow['name']} in {repo_full_name}.")
     return workflow_runs
 
 def process_jobs(github_api, repo_full_name, run_id):
@@ -134,10 +134,10 @@ def process_jobs(github_api, repo_full_name, run_id):
     jobs = github_api.get_jobs(repo_full_name, run_id)
     
     if not jobs:
-        logging.info(f"{Fore.BLUE}ℹ️ No jobs found in workflow run {run_id} for {repo_full_name}.{Style.RESET_ALL}")
+        logging.info(f"ℹ️ No jobs found in workflow run {run_id} for {repo_full_name}.")
         return []
 
-    logging.info(f"{Fore.GREEN}✅ Found {len(jobs)} jobs in workflow run {run_id} for {repo_full_name}.{Style.RESET_ALL}")
+    logging.info(f"✅ Found {len(jobs)} jobs in workflow run {run_id} for {repo_full_name}.")
     return jobs
 
 @click.command()
@@ -167,7 +167,7 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
         parsed_repos = parse_repositories(repos)
         with open('repositories.json', 'w') as f:
             json.dump(parsed_repos, f, indent=4)
-        logging.info(f"{Fore.GREEN}✅ Repositories dumped to repositories.json{Style.RESET_ALL}")
+        logging.info("✅ Repositories dumped to repositories.json")
         return
 
     # Load repositories from file if --repos-file is provided
@@ -194,15 +194,15 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
 
     try:
         for namespace, repos in namespace_repos.items():
-            logging.info(f"{Fore.CYAN}Processing namespace '{namespace}' with {len(repos)} repositories{Style.RESET_ALL}")
+            logging.info(f"Processing namespace '{namespace}' with {len(repos)} repositories")
             for repo in repos:
                 repo_full_name = repo['full_name']
-                logging.info(f"{Fore.CYAN}Processing repository: {repo_full_name}{Style.RESET_ALL}")
+                logging.info(f"Processing repository: {repo_full_name}")
 
                 try:
                     workflows = github_api.get_workflows(repo_full_name, filter_names, filter_paths, since)
                     for workflow in workflows:
-                        logging.info(f"{Fore.CYAN}Workflow: {workflow['name']} (URL: {workflow['url']}){Style.RESET_ALL}")
+                        logging.info(f"Workflow: {workflow['name']} (URL: {workflow['url']})")
                         workflow_runs = process_workflow_runs(github_api, repo_full_name, workflow, since)
 
                         for run in workflow_runs:
@@ -212,9 +212,9 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
                                 filtered_jobs = filter_jobs(jobs, skip_labels)
                                 total_jobs_assessed += len(filtered_jobs)
                                 for job in filtered_jobs:
-                                    logging.info(f"{Fore.CYAN}Processing job: {job['url']}{Style.RESET_ALL}")
+                                    logging.info(f"Processing job: {job['url']}")
                                     if not job.get('steps'):
-                                        logging.warning(f"{Fore.YELLOW}No steps found for job {job['id']}. Logs may have expired.{Style.RESET_ALL}")
+                                        logging.info(f"No steps found for job {job['id']}. Logs may have expired.")
                                         total_empty_jobs += 1
                                         continue
 
@@ -276,9 +276,9 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
             json.dump(sorted_step_name_totals_by_month, f, indent=4)
 
         print(f"\n{Fore.GREEN}Summary:{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}Total actions assessed: {Fore.YELLOW}{total_actions_assessed}{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}Total jobs assessed: {Fore.YELLOW}{total_jobs_assessed}{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}Total empty jobs (logs may have expired): {Fore.YELLOW}{total_empty_jobs}{Style.RESET_ALL}")
+        print(f"Total actions assessed: {total_actions_assessed}")
+        print(f"Total jobs assessed: {total_jobs_assessed}")
+        print(f"Total empty jobs (logs may have expired): {total_empty_jobs}")
     else:
         print(f"{Fore.RED}Script execution failed. No summary information will be logged.{Style.RESET_ALL}")
 
@@ -327,23 +327,23 @@ def calculate_duration(started_at, completed_at):
 
 def save_output_json(output_data, step_name_totals, unique_steps, filter_duration, step_names_file, monthly_summary):
     """ Saves filtered and aggregated JSON data to output files. """
-    print(f'{Fore.CYAN}🔹 Unique steps flag: {unique_steps}{Style.RESET_ALL}')
-    print(f'{Fore.CYAN}🔹 Total output data count: {len(output_data)}{Style.RESET_ALL}')
+    print(f'🔹 Unique steps flag: {unique_steps}')
+    print(f'🔹 Total output data count: {len(output_data)}')
 
     # Extract unique step names only if `unique_steps` is True
     if unique_steps:
         filter_output = list({step['step_name']: step for step in output_data if 'step_name' in step}.values())
         unique_steps_data = sorted({step["step_name"] for step in filter_output if "step_name" in step})
-        print(f'{Fore.CYAN}🔹 Unique steps extracted: {len(unique_steps_data)}{Style.RESET_ALL}')
-        print(f'{Fore.CYAN}🔹 Sample data: {unique_steps_data[:5]}{Style.RESET_ALL}')
+        print(f'🔹 Unique steps extracted: {len(unique_steps_data)}')
+        print(f'🔹 Sample data: {unique_steps_data[:5]}')
 
         # Only save if data exists
         if unique_steps_data:
             with open('step_names.json', 'w') as f:
                 json.dump(unique_steps_data, f, indent=4)
-            print(f"{Fore.GREEN}✅ step_names.json successfully saved!{Style.RESET_ALL}")
+            print(f"✅ step_names.json successfully saved!")
         else:
-            print(f"{Fore.YELLOW}⚠️ Warning: No unique steps found!{Style.RESET_ALL}")
+            print(f"⚠️ Warning: No unique steps found!")
 
     if filter_duration > 0:
         output_data = [step for step in output_data if step['duration_seconds'] and step['duration_seconds'] > filter_duration]
@@ -359,7 +359,7 @@ def save_output_json(output_data, step_name_totals, unique_steps, filter_duratio
         with open('monthly_summary.json', 'w') as f:
             json.dump(monthly_summary_data, f, indent=4)
 
-        logging.info(f"{Fore.GREEN}✅ Monthly summary saved.{Style.RESET_ALL}")
+        logging.info("✅ Monthly summary saved.")
 
 def get_monthly_stage_summary(data):
     """ Aggregates step durations per month. """
@@ -387,21 +387,21 @@ def load_step_names(step_names_file):
         try:
             with open(step_names_file, "r") as f:
                 step_names = json.load(f)
-            logging.info(f"{Fore.GREEN}✅ Loaded step names from {step_names_file}{Style.RESET_ALL}")
+            logging.info(f"✅ Loaded step names from {step_names_file}")
             return step_names
         except json.JSONDecodeError:
-            logging.error(f"{Fore.RED}❌ Invalid JSON format in {step_names_file}. Exiting.{Style.RESET_ALL}")
+            logging.error(f"❌ Invalid JSON format in {step_names_file}. Exiting.")
             return []
     else:
-        logging.error(f"{Fore.RED}❌ File {step_names_file} does not exist. Exiting.{Style.RESET_ALL}")
+        logging.error(f"❌ File {step_names_file} does not exist. Exiting.")
         return []
 
 def handle_error(message, force_continue):
     """ Logs errors and determines whether to continue execution. """
-    logging.error(f"{Fore.RED}{message}{Style.RESET_ALL}")
+    logging.error(message)
     if not force_continue:
-        raise SystemExit(f"{Fore.RED}Exiting due to error.{Style.RESET_ALL}")
-    logging.warning(f"{Fore.YELLOW}Continuing execution...{Style.RESET_ALL}")
+        raise SystemExit("Exiting due to error.")
+    logging.warning("Continuing execution...")
 
 def filter_jobs(jobs, skip_labels):
     filtered_jobs = []

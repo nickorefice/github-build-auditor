@@ -1,3 +1,4 @@
+import base64
 import os
 import requests
 import logging
@@ -28,9 +29,11 @@ class GitHubAPI:
         response.raise_for_status()
         return False
 
-    def _paginate(self, url, key=None):
+    def _paginate(self, url, key=None, initial_request=False):
         results = []
         while url:
+            if not initial_request:
+                logging.info(f"Making API request to: {url}")
             response = requests.get(url, headers=self.headers)
             if self._handle_response(response):
                 continue
@@ -40,16 +43,19 @@ class GitHubAPI:
             else:
                 results.extend(data)
             url = response.links.get('next', {}).get('url')
+            initial_request = False  # Ensure subsequent requests are logged
         return results
 
     def get_repositories(self):
         url = f"{GITHUB_API_URL}/user/repos"
+        logging.info(f"Making API request to: {url}")
         response = requests.get(url, headers=self.headers)
         self._handle_response(response)
-        return self._paginate(url)
+        return self._paginate(url, initial_request=True)
 
     def get_workflows(self, repo_full_name, filter_names=None, filter_paths=None, since=None):
         url = f"{GITHUB_API_URL}/repos/{repo_full_name}/actions/workflows"
+        logging.info(f"Making get_workflows API request to: {url}")
         response = requests.get(url, headers=self.headers)
         self._handle_response(response)
         workflows = response.json().get('workflows', [])
@@ -71,7 +77,7 @@ class GitHubAPI:
     def get_workflow_runs(self, repo_full_name, workflow_id, since=None):
         """
         Fetches workflow runs for a given workflow in a repository, optionally filtering by creation date,
-        and only including runs that are completed and have a conclusion of success or action_required.
+        and only including runs that have a conclusion of success or action_required.
         
         :param repo_full_name: Full repository name (e.g., "docker/cli").
         :param workflow_id: The ID of the workflow.
@@ -80,16 +86,19 @@ class GitHubAPI:
         """
         url = f"{GITHUB_API_URL}/repos/{repo_full_name}/actions/workflows/{workflow_id}/runs"
         params = {
-            "status": "completed"  # Only return workflow runs with a status of completed.
+            "status": "completed",  # Only return workflow runs with a status of completed.
+            "conclusion": ["success", "action_required"]  # Only include runs with these conclusions.
         }
         if since:
             # Using the GitHub API's created query parameter to only return runs created after the given date.
             params['created'] = f">{since.strftime('%Y-%m-%dT%H:%M:%SZ')}"
         
+        logging.info(f"Making get_workflow_runs API request to: {url} with params: {params}")
         response = requests.get(url, headers=self.headers, params=params)
         self._handle_response(response)
         workflow_runs = response.json().get('workflow_runs', [])
-        
+        logging.info(f"Runs response request to: {url} with params: {params}: {workflow_runs}")
+
         # Ensure that the returned runs are created on or after the since date:
         if since:
             workflow_runs = [
@@ -97,32 +106,28 @@ class GitHubAPI:
                 if datetime.strptime(run['created_at'], '%Y-%m-%dT%H:%M:%SZ') >= since
             ]
         
-        # Filter to only include runs with conclusion either 'success' or 'action_required'
-        allowed_conclusions = {"success", "action_required"}
-        filtered_runs = [
-            run for run in workflow_runs
-            if run.get('conclusion') in allowed_conclusions
-        ]
-        
-        return filtered_runs
+        return workflow_runs
     
     def get_jobs(self, repo_full_name, run_id):
         url = f"{GITHUB_API_URL}/repos/{repo_full_name}/actions/runs/{run_id}/jobs"
+        logging.info(f"Making API request to: {url}")
         response = requests.get(url, headers=self.headers)
         if response.status_code == 404:
             logging.warning(f"{Fore.YELLOW}⚠️ Job not found for run {run_id} in {repo_full_name}. Logs may have expired.{Style.RESET_ALL}")
             return []
         self._handle_response(response)
-        return self._paginate(url, key='jobs')
+        return self._paginate(url, key='jobs', initial_request=True)
 
     def search_files(self, repo_full_name, query):
         url = f"{GITHUB_API_URL}/search/code?q={query}+repo:{repo_full_name}"
+        logging.info(f"Making API request to: {url}")
         response = requests.get(url, headers=self.headers)
         self._handle_response(response)
         return response.json().get('items', [])
 
     def get_file_content(self, repo_full_name, path):
         url = f"{GITHUB_API_URL}/repos/{repo_full_name}/contents/{path}"
+        logging.info(f"Making API request to: {url}")
         response = requests.get(url, headers=self.headers)
         self._handle_response(response)
         content = response.json().get('content', '')
