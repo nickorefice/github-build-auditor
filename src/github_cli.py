@@ -114,25 +114,28 @@ def select_namespaces(repos):
 
 def process_workflow_runs(github_api, repo_full_name, workflow, since=None):
     """
-    Fetches workflow runs for a given workflow in a repository.
-
+    Fetches workflow runs for a given workflow in a repository and prints feedback to the terminal.
+    
     :param github_api: Instance of GitHubAPI.
-    :param repo_full_name: Full repository name (e.g., "org/repo").
+    :param repo_full_name: Full repository name (e.g., "docker/pinata").
     :param workflow: Dictionary containing workflow metadata.
-    :param since: Datetime object to filter workflow runs.
+    :param since: Datetime object. Only workflow runs created on or after this date will be returned.
     :return: List of workflow runs.
     """
     workflow_id = workflow.get('id')
     if not workflow_id:
         logging.warning(f"⚠️ Workflow {workflow.get('name', 'Unknown')} has no ID. Skipping.")
         return []
-
+    
+    # Provide formatted feedback to the user
+    print(f"{Fore.CYAN}  Assessing workflow: '{workflow.get('name', 'Unknown')}' (ID: {workflow_id})...{Style.RESET_ALL}")
+    
     workflow_runs = github_api.get_workflow_runs(repo_full_name, workflow_id, since)
-    if not workflow_runs:
-        logging.info(f"ℹ️ No workflow runs found for {workflow['name']} in {repo_full_name}.")
-        return []
-
-    logging.info(f"✅ Found {len(workflow_runs)} workflow runs for {workflow['name']} in {repo_full_name}.")
+    
+    # Print count feedback to terminal in a formatted manner
+    print(f"{Fore.GREEN}  Found {len(workflow_runs)} workflow run{'s' if len(workflow_runs) != 1 else ''} for '{workflow.get('name', 'Unknown')}'{Style.RESET_ALL}")
+    logging.info(f"✅ Found {len(workflow_runs)} workflow runs for {workflow.get('name', 'Unknown')} in {repo_full_name}.")
+    
     return workflow_runs
 
 def process_jobs(github_api, repo_full_name, run_id):
@@ -219,6 +222,9 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
 
                 try:
                     workflows = github_api.get_workflows(repo_full_name, filter_names, filter_paths, since)
+                    # Print out total active workflows for the repository
+                    print(f"{Style.BRIGHT}Repository: {repo_full_name} - Active workflows count: {len(workflows)}{Style.RESET_ALL}")
+                    
                     for workflow in workflows:
                         logging.info(f"Workflow: {workflow['name']} (URL: {workflow['url']})")
                         workflow_runs = process_workflow_runs(github_api, repo_full_name, workflow, since)
@@ -307,7 +313,6 @@ def process_steps(job, step_names, step_name_totals):
     for step in job['steps']:
         total_actions_assessed += 1
         step_name = step['name']
-        step_number = step['number']
         step_started_at = step.get('started_at')
         step_completed_at = step.get('completed_at')
         step_status = step.get('status')
@@ -353,7 +358,7 @@ def save_output_json(output_data, step_name_totals, unique_steps, filter_duratio
         filter_output = list({step['step_name']: step for step in output_data if 'step_name' in step}.values())
         unique_steps_data = sorted({step["step_name"] for step in filter_output if "step_name" in step})
         print(f'🔹 Unique steps extracted: {len(unique_steps_data)}')
-        print(f'🔹 Sample data: {unique_steps_data[:5]}')
+        print(f'🔹 Some steps found include: {unique_steps_data[:5]}')
 
         # Only save if data exists
         if unique_steps_data:
@@ -380,21 +385,43 @@ def save_output_json(output_data, step_name_totals, unique_steps, filter_duratio
         logging.info("✅ Monthly summary saved.")
 
 def get_monthly_stage_summary(data):
-    """ Aggregates step durations per month. """
-    monthly_summary = defaultdict(lambda: defaultdict(float))
-
+    """ 
+    Aggregates step durations and counts per month.
+    Converts total step duration from seconds to minutes.
+    Returns a dictionary with each month as key and an ordered dictionary for each step (sorted by duration_minutes in descending order).
+    """
+    from collections import defaultdict, OrderedDict
+    # Aggregate durations (in seconds) and counts per step name in each month:
+    monthly_summary = defaultdict(lambda: defaultdict(lambda: {"duration": 0.0, "count": 0}))
+    
     for step in data:
         start_time = step.get('started_at')
         if not start_time:
             continue
-
+        # Group by month key using the started_at timestamp
         month_key = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m')
         step_name = step['step_name']
-        duration = step['duration_seconds'] or 0
+        duration = step.get('duration_seconds') or 0
+        monthly_summary[month_key][step_name]["duration"] += duration
+        monthly_summary[month_key][step_name]["count"] += 1
 
-        monthly_summary[month_key][step_name] += duration
+    # For each month convert duration to minutes and sort the steps by duration_minutes (descending)
+    monthly_summary_in_minutes = {}
+    for month, steps in monthly_summary.items():
+        # Convert seconds to minutes for each step
+        steps_with_minutes = {
+            name: {
+                "duration_minutes": metrics["duration"] / 60.0,
+                "count": metrics["count"]
+            } for name, metrics in steps.items()
+        }
+        # Sort the steps by duration_minutes in descending order:
+        sorted_steps = OrderedDict(
+            sorted(steps_with_minutes.items(), key=lambda item: item[1]["duration_minutes"], reverse=True)
+        )
+        monthly_summary_in_minutes[month] = sorted_steps
 
-    return {month: dict(steps) for month, steps in monthly_summary.items()}
+    return monthly_summary_in_minutes
 
 def load_step_names(step_names_file):
     """ Loads step names from a JSON file. """

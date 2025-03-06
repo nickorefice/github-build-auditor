@@ -58,24 +58,23 @@ class GitHubAPI:
 
     def get_workflows(self, repo_full_name, filter_names=None, filter_paths=None, since=None):
         url = f"{GITHUB_API_URL}/repos/{repo_full_name}/actions/workflows"
-        logging.info(f"Making get_workflows API request to: {url}")
+        logging.info(f"Assessing {repo_full_name} workflows - API request: {url}")
+        print(f"Assessing {repo_full_name} workflows")
         response = requests.get(url, headers=self.headers)
         self._handle_response(response)
         workflows = response.json().get('workflows', [])
         
+        # Filter to only include active workflows (since the API doesn't support state filtering via query)
+        active_workflows = [wf for wf in workflows if wf.get("state") == "active"]
+        
+
         if filter_names:
-            workflows = [wf for wf in workflows if wf['name'] in filter_names]
+            active_workflows = [wf for wf in active_workflows if wf['name'] in filter_names]
         if filter_paths:
-            workflows = [wf for wf in workflows if wf['path'] in filter_paths]
+            active_workflows = [wf for wf in active_workflows if wf['path'] in filter_paths]
         
-        if workflows:
-            logging.info(f"Workflows for {repo_full_name}:")
-            for wf in workflows:
-                logging.info(f"  - {wf['name']} (URL: {wf['url']})")
-        else:
-            logging.info(f"No workflows found for {repo_full_name}.")
-        
-        return workflows
+        logging.info(f"Found {len(active_workflows)} active workflows for {repo_full_name}.")
+        return active_workflows
 
     def get_workflow_runs(self, repo_full_name, workflow_id, since=None):
         """
