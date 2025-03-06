@@ -59,7 +59,6 @@ class GitHubAPI:
     def get_workflows(self, repo_full_name, filter_names=None, filter_paths=None, since=None):
         url = f"{GITHUB_API_URL}/repos/{repo_full_name}/actions/workflows"
         logging.info(f"Assessing {repo_full_name} workflows - API request: {url}")
-        print(f"Assessing {repo_full_name} workflows")
         response = requests.get(url, headers=self.headers)
         self._handle_response(response)
         workflows = response.json().get('workflows', [])
