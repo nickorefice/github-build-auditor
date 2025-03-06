@@ -1,12 +1,12 @@
 import os
 import logging
 import json
-from datetime import datetime, timedelta
 from collections import defaultdict, OrderedDict
 import click
 from dotenv import load_dotenv
 from github_api import GitHubAPI
 from colorama import init, Fore, Style
+from datetime import datetime, timedelta, timezone
 
 # Initialize colorama
 init(autoreset=True)
@@ -28,23 +28,36 @@ logging.basicConfig(
     handlers=[file_handler, console_handler]
 )
 
-def fetch_repositories(github_api):
-    """ Fetch all repositories from GitHub API. """
-    repos = github_api.get_repositories()
+def fetch_repositories(github_api, since=None):
+    """ Fetch all repositories from GitHub API updated since the given date. """
+    print(f"Searching for repositories...")
+    repos = github_api.get_repositories(since)
+    print(f"✅ Total repositories fetched: {len(repos)}")
     logging.info(f"✅ Total repositories fetched: {len(repos)}")
     return repos
 
 def parse_repositories(repos):
-    """ Parse repositories to keep only full_name, html_url, and description. """
+    """ 
+    Parse repositories to keep only full_name, html_url, description, and updated_at.
+    Excludes repositories that are archived or disabled.
+    Returns the filtered repositories sorted by updated_at (descending).
+    """
     parsed_repos = []
     for repo in repos:
+        # Exclude repositories that are archived or disabled
+        if repo.get("archived") or repo.get("disabled"):
+            continue
         parsed_repo = {
             "full_name": repo.get("full_name"),
             "html_url": repo.get("html_url"),
-            "description": repo.get("description")
+            "description": repo.get("description"),
+            "updated_at": repo.get("updated_at"),
         }
         parsed_repos.append(parsed_repo)
-    return parsed_repos
+    
+    # Sort repositories by updated_at in descending order (latest first)
+    sorted_repos = sorted(parsed_repos, key=lambda r: r.get("updated_at", ""), reverse=True)
+    return sorted_repos
 
 def load_repositories_from_file(file_path):
     """ Load repositories from a JSON file. """
@@ -163,8 +176,13 @@ def main(unique_steps, force_continue, filter_duration, monthly_summary, step_na
 
     # Dump repositories if --dump-repos is provided
     if dump_repos:
-        repos = fetch_repositories(github_api)
-        parsed_repos = parse_repositories(repos)
+        since_date = (datetime.now(timezone.utc) - timedelta(days=30)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        repos = fetch_repositories(github_api, since=since_date)
+        # Prompt the user to select namespaces from the fetched repositories
+        selected_namespaces = select_namespaces(repos)
+        # Filter repositories by selected namespaces
+        filtered_repos = [repo for repo in repos if repo.get("full_name", "").split('/')[0] in selected_namespaces]
+        parsed_repos = parse_repositories(filtered_repos)
         with open('repositories.json', 'w') as f:
             json.dump(parsed_repos, f, indent=4)
         logging.info("✅ Repositories dumped to repositories.json")

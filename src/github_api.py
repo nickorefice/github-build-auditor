@@ -46,10 +46,13 @@ class GitHubAPI:
             initial_request = False  # Ensure subsequent requests are logged
         return results
 
-    def get_repositories(self):
+    def get_repositories(self, since=None):
         url = f"{GITHUB_API_URL}/user/repos"
-        logging.info(f"Making API request to: {url}")
-        response = requests.get(url, headers=self.headers)
+        params = {}
+        if since:
+            params['since'] = since
+        logging.info(f"Making API request to: {url} with params: {params}")
+        response = requests.get(url, headers=self.headers, params=params)
         self._handle_response(response)
         return self._paginate(url, initial_request=True)
 
