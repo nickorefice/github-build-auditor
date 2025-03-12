@@ -358,7 +358,7 @@ def save_output_json(output_data, step_name_totals, unique_steps, filter_duratio
         filter_output = list({step['step_name']: step for step in output_data if 'step_name' in step}.values())
         unique_steps_data = sorted({step["step_name"] for step in filter_output if "step_name" in step})
         print(f'🔹 Unique steps extracted: {len(unique_steps_data)}')
-        print(f'🔹 Some steps found include: {unique_steps_data[:5]}')
+        print(f'🔹 Some steps found include: {unique_steps_data[5:]}')
 
         # Only save if data exists
         if unique_steps_data:
@@ -367,6 +367,10 @@ def save_output_json(output_data, step_name_totals, unique_steps, filter_duratio
             print(f"✅ step_names.json successfully saved!")
         else:
             print(f"⚠️ Warning: No unique steps found!")
+
+                # Only save if data exists
+        if  monthly_summary:
+            print(f"✅ monthly_summary.json successfully saved!")
 
     if filter_duration > 0:
         output_data = [step for step in output_data if step['duration_seconds'] and step['duration_seconds'] > filter_duration]
