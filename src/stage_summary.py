@@ -4,8 +4,8 @@ from datetime import datetime
 
 def aggregate_stage_durations(input_file, output_file):
     """
-    Reads the stage_durations.json file, aggregates step durations and counts per month,
-    converts total duration in seconds to minutes, sorts steps by duration (descending),
+    Reads the stage_durations.json file, aggregates step durations and counts by month and step name.
+    Converts total duration in seconds to minutes, sorts steps by duration (descending),
     and outputs the results to month_summary.json.
     """
     # Load stage_durations.json
@@ -19,7 +19,8 @@ def aggregate_stage_durations(input_file, output_file):
         # Only process items that have both a 'started_at' timestamp and a 'step_name'
         started_at = item.get("started_at")
         step_name = item.get("step_name")
-        duration = item.get("duration_seconds", 0)
+        # Coerce duration to 0 if the value is None or falsy
+        duration = item.get("duration_seconds") or 0
         
         if started_at and step_name:
             try:
