@@ -1,8 +1,0 @@
-[
-    "Build and push",
-    "Docker Setup QEMU",
-    "Build and push by digest",
-    "Build and push Docker image on push",
-    "Build and push Docker image on PR",
-    "Set up QEMU"
-]
